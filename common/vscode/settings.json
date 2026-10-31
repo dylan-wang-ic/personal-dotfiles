@@ -1,0 +1,14 @@
+{
+    "window.autoDetectColorScheme": true,
+    "security.workspace.trust.untrustedFiles": "open",
+    "security.promptForLocalFileProtocolHandling": false,
+    "git.enableSmartCommit": true,
+    "remote.SSH.remotePlatform": {
+        "claw": "linux"
+    },
+    "claudeCode.preferredLocation": "panel",
+    "claudeCode.hideOnboarding": true,
+    "cursor.composer.queueMessageDefaultBehavior": "steer",
+    "cursor.composer.queueManualSendBehavior2": "steer",
+    "explorer.confirmDelete": false
+}

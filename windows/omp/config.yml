@@ -1,0 +1,111 @@
+defaultThinkingLevel: xhigh
+modelRoles:
+  default: cursor/grok-4.7-500k:xhigh
+  task: cursor/grok-4.7-500k:xhigh
+  plan: anthropic/claude-opus-5-5:max
+  slow: anthropic/claude-opus-5-5:max
+  smol: anthropic/claude-sonnet-5-5:xhigh
+  tiny: anthropic/claude-haiku-5-5:xhigh
+  memory: "@tiny"
+  commit: anthropic/claude-haiku-5-5:high
+  widget: anthropic/claude-sonnet-5-5:xhigh
+  vision: google-antigravity/gemini-4-argon:high
+  advisor: openai-codex/gpt-6.1-sol:xhigh
+  judge: "@tiny"
+  image: openai-codex/gpt-image-2
+  web: web/parallel
+  speech: local/kokoro
+  dictation: local/parakeet-tdt-0.6b-v3
+advisor:
+  enabled: false
+  reviewMode: agent-end
+task:
+  batch: true
+  maxConcurrency: 4
+  enableEffort: false
+  enableLsp: true
+retry:
+  enabled: true
+  maxRetries: 3
+  baseDelayMs: 500
+  maxDelayMs: 30000
+  modelFallback: true
+  fallbackOn: any
+  fallbackRevertPolicy: cooldown-expiry
+  waitForUsageReset: false
+  usageAwareFallback: true
+  usageReservePct: 5
+  usageReservePolicy: auto
+  fallbackChains:
+    default:
+      - anthropic/claude-sonnet-5-5:xhigh
+      - google-antigravity/gemini-4-argon:high
+    task:
+      - anthropic/claude-sonnet-5-5:xhigh
+      - google-antigravity/gemini-4-argon:high
+    plan:
+      - anthropic/claude-sonnet-5-5:xhigh
+      - google-antigravity/gemini-4-argon:high
+    slow:
+      - anthropic/claude-sonnet-5-5:xhigh
+      - google-antigravity/gemini-4-argon:high
+    smol:
+      - google-antigravity/gemini-4-argon:high
+    tiny:
+      - google-antigravity/gemini-4-argon:high
+    memory:
+      - google-antigravity/gemini-4-argon:high
+    commit:
+      - google-antigravity/gemini-4-argon:high
+    widget:
+      - google-antigravity/gemini-4-argon:high
+    judge:
+      - google-antigravity/gemini-4-argon:high
+    advisor:
+      - anthropic/claude-opus-5-5:max
+      - google-antigravity/gemini-4-argon:high
+    vision:
+      - anthropic/claude-sonnet-5-5:xhigh
+    image: []
+    speech: []
+    dictation: []
+symbolPreset: nerd
+composer:
+  shape: rule
+theme:
+  dark: titanium
+  light: light
+setupVersion: 2
+shellPath: C:\Program Files\Git\usr\bin\bash.exe
+bash:
+  gitGuard: true
+bashInterceptor:
+  enabled: true
+lsp:
+  diagnosticsOnEdit: true
+terminal:
+  showProgress: true
+display:
+  subagentLivePreview: true
+  showTurnTime: true
+secrets:
+  enabled: true
+gc:
+  autoCompress: true
+  stale: true
+skills:
+  enableClaudeUser: true
+  enableCodexUser: true
+  customDirectories:
+    - C:/Users/xegna/.codex/skills/.system
+    - C:/Users/xegna/.codex/plugins/cache/openai-bundled/computer-use/26.1027.30824/skills
+    - C:/Users/xegna/.codex/plugins/cache/openai-bundled/visualize/1.0.66/skills
+    - C:/Users/xegna/.codex/plugins/cache/openai-primary-runtime/documents/26.1026.10807/skills
+    - C:/Users/xegna/.codex/plugins/cache/openai-primary-runtime/pdf/26.1026.10807/skills
+    - C:/Users/xegna/.codex/plugins/cache/openai-primary-runtime/presentations/26.1026.10807/skills
+    - C:/Users/xegna/.codex/plugins/cache/openai-primary-runtime/spreadsheets/26.1026.10807/skills
+    - C:/Users/xegna/.codex/plugins/cache/openai-primary-runtime/template-creator/26.1026.10807/skills
+    - C:/Users/xegna/.claude/skills/synced/b6f85204-8c6f-4ddf-abd9-6cfdd84678d9_c5ee823a-d0b8-4261-bc73-4b1e416c18a0
+hideThinkingBlock: true
+computer:
+  enabled: true

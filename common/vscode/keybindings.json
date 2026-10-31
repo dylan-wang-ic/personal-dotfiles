@@ -1,0 +1,21 @@
+[
+  // Mac-style word navigation (Alt instead of Ctrl)
+  { "key": "alt+left", "command": "cursorWordPartLeft", "when": "editorTextFocus" },
+  { "key": "alt+right", "command": "cursorWordPartRight", "when": "editorTextFocus" },
+
+  // Mac-style word selection (Alt+Shift)
+  { "key": "alt+shift+left", "command": "cursorWordPartLeftSelect", "when": "editorTextFocus" },
+  { "key": "alt+shift+right", "command": "cursorWordPartRightSelect", "when": "editorTextFocus" },
+
+  // Mac-style delete word (Alt+Backspace/Delete)
+  { "key": "alt+backspace", "command": "deleteWordPartLeft", "when": "editorTextFocus && !editorReadonly" },
+  { "key": "alt+delete", "command": "deleteWordPartRight", "when": "editorTextFocus && !editorReadonly" },
+
+  // Mac-style line navigation (Ctrl for Home/End of line)
+  { "key": "ctrl+left", "command": "cursorHome", "when": "editorTextFocus" },
+  { "key": "ctrl+right", "command": "cursorEnd", "when": "editorTextFocus" },
+
+  // Mac-style line selection (Ctrl+Shift for select to Home/End)
+  { "key": "ctrl+shift+left", "command": "cursorHomeSelect", "when": "editorTextFocus" },
+  { "key": "ctrl+shift+right", "command": "cursorEndSelect", "when": "editorTextFocus" }
+]

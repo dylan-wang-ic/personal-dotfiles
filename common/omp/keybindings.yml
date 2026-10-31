@@ -1,0 +1,8 @@
+tui.editor.cursorWordLeft: [alt+left]
+tui.editor.cursorWordRight: [alt+right]
+tui.editor.cursorLineStart: [ctrl+left]
+tui.editor.cursorLineEnd: [ctrl+right]
+tui.editor.deleteWordBackward: [alt+backspace]
+tui.editor.deleteWordForward: [alt+delete]
+tui.editor.deleteToLineStart: [ctrl+backspace]
+tui.editor.deleteToLineEnd: [ctrl+delete]

@@ -1,0 +1,263 @@
+"$schema" = 'https://starship.rs/config-schema.json'
+
+# Raise timeout; git_status disabled for monorepo performance
+command_timeout = 2000
+
+add_newline = false
+
+# ── layout (pure preset) ─────────────────────────────────────────────────────
+format = """
+$username\
+$hostname\
+$directory\
+$git_branch\
+$git_state\
+$git_status\
+$cmd_duration\
+$line_break\
+$python\
+$character"""
+
+# ── prompt character (pure) ───────────────────────────────────────────────────
+[character]
+success_symbol = "[❯](dimmed yellow)[❯](yellow)[❯](bold yellow)"
+error_symbol = "[❯](dimmed red)[❯](red)[❯](bold red)"
+vimcmd_symbol = "[❮](dimmed green)[❮](green)[❮](bold green)"
+
+# ── directory (pure + nerd font) ─────────────────────────────────────────────
+[directory]
+style = "cyan"
+read_only = " 󰌾"
+
+# ── git (pure + nerd font, status disabled for monorepo perf) ────────────────
+[git_branch]
+symbol = " "
+format = "[$branch]($style)"
+style = "purple"
+
+[git_status]
+disabled = true
+
+[git_state]
+format = '\([$state( $progress_current/$progress_total)]($style)\) '
+style = "bright-black"
+
+[git_commit]
+tag_symbol = '  '
+
+# ── timing (pure) ─────────────────────────────────────────────────────────────
+[cmd_duration]
+format = "[$duration]($style) "
+style = "yellow"
+
+# ── hostname (nerd font ssh icon) ─────────────────────────────────────────────
+[hostname]
+ssh_symbol = " "
+
+# ── python: virtualenv only, no version (pure + nerd font + no-runtimes) ─────
+[python]
+symbol = " "
+format = "[$virtualenv]($style) "
+style = "bright-black"
+detect_extensions = []
+detect_files = []
+
+# ── language modules: nerd font symbol + no version (no-runtimes) ─────────────
+[aws]
+symbol = " "
+
+[buf]
+symbol = " "
+format = "with [$symbol]($style)"
+
+[bun]
+symbol = " "
+format = "via [$symbol]($style)"
+
+[c]
+symbol = " "
+format = "via [$symbol($name)]($style)"
+
+[cmake]
+symbol = " "
+format = "via [$symbol]($style)"
+
+[conda]
+symbol = " "
+
+[crystal]
+symbol = " "
+format = "via [$symbol]($style)"
+
+[dart]
+symbol = " "
+format = "via [$symbol]($style)"
+
+[deno]
+symbol = " "
+format = "via [$symbol]($style)"
+
+[docker_context]
+symbol = " "
+
+[dotnet]
+format = "[$symbol(🎯 $tfm )]($style)"
+
+[elixir]
+symbol = " "
+format = 'via [$symbol]($style)'
+
+[elm]
+symbol = " "
+format = 'via [$symbol]($style)'
+
+[erlang]
+format = 'via [$symbol]($style)'
+
+[fennel]
+symbol = " "
+format = 'via [$symbol]($style)'
+
+[fossil_branch]
+symbol = " "
+
+[gcloud]
+symbol = " "
+
+[gleam]
+format = 'via [$symbol]($style)'
+
+[golang]
+symbol = " "
+format = 'via [$symbol]($style)'
+
+[gradle]
+symbol = " "
+format = 'via [$symbol]($style)'
+
+[haskell]
+symbol = " "
+format = 'via [$symbol]($style)'
+
+[haxe]
+format = 'via [$symbol]($style)'
+
+[helm]
+format = 'via [$symbol]($style)'
+
+[java]
+symbol = " "
+format = 'via [$symbol]($style)'
+
+[julia]
+symbol = " "
+format = 'via [$symbol]($style)'
+
+[kotlin]
+symbol = " "
+format = 'via [$symbol]($style)'
+
+[lua]
+symbol = " "
+format = 'via [$symbol]($style)'
+
+[memory_usage]
+symbol = "󰍛 "
+
+[meson]
+symbol = "󰔷 "
+format = 'via [$symbol]($style)'
+
+[mojo]
+format = 'with [$symbol]($style)'
+
+[nim]
+symbol = "󰆥 "
+format = 'via [$symbol]($style)'
+
+[nix_shell]
+symbol = " "
+
+[nodejs]
+symbol = " "
+format = 'via [$symbol]($style)'
+
+[ocaml]
+symbol = " "
+format = 'via [$symbol(\($switch_indicator$switch_name\) )]($style)'
+
+[odin]
+format = 'via [$symbol]($style)'
+
+[opa]
+format = 'via [$symbol]($style)'
+
+[package]
+symbol = "󰏗 "
+
+[perl]
+symbol = " "
+format = 'via [$symbol]($style)'
+
+[php]
+symbol = " "
+format = 'via [$symbol]($style)'
+
+[pixi]
+symbol = "󰏗 "
+format = 'via [$symbol($environment )]($style)'
+
+[pulumi]
+format = 'via [$symbol$stack]($style)'
+
+[purescript]
+format = 'via [$symbol]($style)'
+
+[quarto]
+format = 'via [$symbol]($style)'
+
+[raku]
+format = 'via [$symbol]($style)'
+
+[red]
+format = 'via [$symbol]($style)'
+
+[rlang]
+symbol = "󰟔 "
+format = 'via [$symbol]($style)'
+
+[ruby]
+symbol = " "
+format = 'via [$symbol]($style)'
+
+[rust]
+symbol = "󱘗 "
+format = 'via [$symbol]($style)'
+
+[scala]
+symbol = " "
+format = 'via [$symbol]($style)'
+
+[solidity]
+format = 'via [$symbol]($style)'
+
+[swift]
+symbol = " "
+format = 'via [$symbol]($style)'
+
+[typst]
+format = 'via [$symbol]($style)'
+
+[vagrant]
+format = 'via [$symbol]($style)'
+
+[vlang]
+format = 'via [$symbol]($style)'
+
+[xmake]
+symbol = " "
+format = "via [$symbol]($style)"
+
+[zig]
+symbol = " "
+format = 'via [$symbol]($style)'
