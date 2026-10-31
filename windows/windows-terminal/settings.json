@@ -10,6 +10,10 @@
                 "input": "\u001b[13;2u"
             },
             "id": "User.sendInput.ShiftEnter"
+        },
+        {
+            "command": "closeTab",
+            "id": "User.closeTab"
         }
     ],
     "compatibility.enableUnfocusedAcrylic": false,
@@ -40,6 +44,70 @@
         {
             "id": "User.sendInput.ShiftEnter",
             "keys": "shift+enter"
+        },
+        {
+            "id": null,
+            "keys": "alt+left"
+        },
+        {
+            "id": null,
+            "keys": "alt+right"
+        },
+        {
+            "id": null,
+            "keys": "alt+up"
+        },
+        {
+            "id": null,
+            "keys": "alt+down"
+        },
+        {
+            "id": "Terminal.MoveFocusLeft",
+            "keys": "ctrl+alt+left"
+        },
+        {
+            "id": "Terminal.MoveFocusRight",
+            "keys": "ctrl+alt+right"
+        },
+        {
+            "id": "Terminal.MoveFocusUp",
+            "keys": "ctrl+alt+up"
+        },
+        {
+            "id": "Terminal.MoveFocusDown",
+            "keys": "ctrl+alt+down"
+        },
+        {
+            "id": "Terminal.SplitPaneLeft",
+            "keys": "ctrl+alt+shift+left"
+        },
+        {
+            "id": "Terminal.SplitPaneRight",
+            "keys": "ctrl+alt+shift+right"
+        },
+        {
+            "id": "Terminal.SplitPaneUp",
+            "keys": "ctrl+alt+shift+up"
+        },
+        {
+            "id": "Terminal.SplitPaneDown",
+            "keys": "ctrl+alt+shift+down"
+        },
+        {
+            "id": "Terminal.ClosePane",
+            "keys": "ctrl+alt+w"
+        },
+        {
+            "id": "User.closeTab",
+            "keys": "ctrl+shift+w"
+        },
+        {
+            "id": "Terminal.PrevTab",
+            "keys": "ctrl+shift+left"
+        },
+        {
+            "id": "Terminal.NextTab",
+            "keys": "ctrl+shift+right"
         }
     ],
     "newTabMenu": 

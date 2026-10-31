@@ -30,4 +30,15 @@ $if mode=emacs
   # Tab / Shift+Tab menu cycling (first Tab expands common prefix + lists matches)
   TAB: menu-complete
   "\e[Z": menu-complete-backward
+
+  # Ctrl = line, Alt = word (matches PowerShell in Windows Terminal)
+  "\e[1;5D": beginning-of-line   # Ctrl+Left
+  "\e[1;5C": end-of-line         # Ctrl+Right
+  "\e[1;3D": backward-word       # Alt+Left
+  "\e[1;3C": forward-word        # Alt+Right
+  "\C-h": kill-whole-line        # Ctrl+Backspace
+  "\e\d": backward-kill-word     # Alt+Backspace
+  "\e[3;5~": kill-line           # Ctrl+Delete
+  "\e[3;3~": kill-word           # Alt+Delete
+  "\C-z": undo                   # Ctrl+Z
 $endif

@@ -15,6 +15,17 @@ Set-PSReadLineKeyHandler -Key UpArrow   -Function HistorySearchBackward
 Set-PSReadLineKeyHandler -Key DownArrow -Function HistorySearchForward
 Set-PSReadLineKeyHandler -Key Tab       -Function MenuComplete
 
+# Ctrl = line, Alt = word. Alt+arrows move panes via Ctrl+Alt+arrows instead.
+Set-PSReadLineKeyHandler -Key Ctrl+LeftArrow  -Function BeginningOfLine
+Set-PSReadLineKeyHandler -Key Ctrl+RightArrow -Function EndOfLine
+Set-PSReadLineKeyHandler -Key Alt+LeftArrow   -Function BackwardWord
+Set-PSReadLineKeyHandler -Key Alt+RightArrow  -Function NextWord
+Set-PSReadLineKeyHandler -Key Ctrl+Backspace  -Function DeleteLine
+Set-PSReadLineKeyHandler -Key Alt+Backspace   -Function BackwardKillWord
+Set-PSReadLineKeyHandler -Key Ctrl+Delete     -Function ForwardDeleteLine
+Set-PSReadLineKeyHandler -Key Alt+Delete      -Function KillWord
+Set-PSReadLineKeyHandler -Key Ctrl+z          -Function Undo
+
 # ── Starship (single-spawn init + zero-fork transient prompt) ────────────────
 if (Get-Command starship -ErrorAction SilentlyContinue) {
     function Invoke-Starship-TransientFunction {
