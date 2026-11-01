@@ -25,6 +25,12 @@ case "$(uname -s)" in
     ;;
 esac
 
+PROFILE="${2:-all}"
+case "$PROFILE" in
+  all|workstation) ;;
+  *) echo "Unknown profile: $PROFILE (expected all or workstation)" >&2; exit 1 ;;
+esac
+
 HOME="$(to_posix "$HOME")"
 XDG_CONFIG_DIR="$(to_posix "${XDG_CONFIG_HOME:-$HOME/.config}")"
 
@@ -75,12 +81,16 @@ if [[ "${DOTFILES_COPY_ONLY:-0}" != "1" ]] && can_symlink; then
   USE_SYMLINKS=1
 fi
 
-BACKUP_ROOT="$HOME/.dotfiles-backup/$(date +%Y%m%d-%H%M%S)"
+BACKUP_ROOT="$HOME/.dotfiles-backup/$(date +%Y%m%d-%H%M%S)-$$-${RANDOM}"
 BACKED_UP=0
 
 backup_if_needed() {
   local dst="$1" src="$2"
   [[ -e "$dst" || -L "$dst" ]] || return 0
+  if [[ -d "$dst" ]]; then
+    echo "Refusing to replace a directory: $dst" >&2
+    return 1
+  fi
   if [[ -L "$dst" ]]; then
     local link_target
     link_target="$(readlink "$dst" || true)"
@@ -93,7 +103,15 @@ backup_if_needed() {
   [[ "$rel" == "$dst" ]] && rel="$(basename "$dst")"
   local bpath="$BACKUP_ROOT/$rel"
   mkdir -p "$(dirname "$bpath")"
-  cp -a "$dst" "$bpath"
+  # Preserve effective content even if a legacy symlink's source is later removed.
+  if [[ -L "$dst" ]]; then
+    readlink "$dst" > "${bpath}.link-target"
+  fi
+  if [[ -f "$dst" ]]; then
+    cp -pL "$dst" "$bpath"
+  else
+    cp -a "$dst" "$bpath"
+  fi
   BACKED_UP=1
 }
 
@@ -107,41 +125,111 @@ is_same_link() {
 
 # Format: MODE|REPO_REL_PATH|SYSTEM_TARGET_PATH
 # MODE: "auto" (symlink if supported, else copy) or "copy" (always copy)
-MAPPINGS=(
-  "auto|common/bash/.bashrc|$HOME/.bashrc"
-  "auto|common/bash/.bash_profile|$HOME/.bash_profile"
-  "auto|common/readline/.inputrc|$HOME/.inputrc"
-  "auto|common/starship/starship.toml|$XDG_CONFIG_DIR/starship.toml"
-  "auto|common/gh/config.yml|$GH_CONFIG_DIR/config.yml"
-  "auto|common/vscode/settings.json|$VSCODE_USER_DIR/settings.json"
-  "auto|common/vscode/keybindings.json|$VSCODE_USER_DIR/keybindings.json"
-  "auto|common/vscode/mcp.json|$VSCODE_USER_DIR/mcp.json"
-  "auto|common/omp/keybindings.yml|$HOME/.omp/agent/keybindings.yml"
-)
-
-# Share VS Code settings & keybindings with Cursor when Cursor is present
-if [[ -d "$CURSOR_APP_DIR" || -d "$HOME/.cursor" ]]; then
-  MAPPINGS+=(
-    "auto|common/vscode/settings.json|$CURSOR_USER_DIR/settings.json"
-    "auto|common/vscode/keybindings.json|$CURSOR_USER_DIR/keybindings.json"
-    "auto|common/cursor/cli-config.json|$HOME/.cursor/cli-config.json"
+if [[ "$PROFILE" == "workstation" ]]; then
+  # Only input and prompt preferences. Never replace work profiles, auth, settings, or MCP.
+  MAPPINGS=(
+    "auto|common/starship/starship.toml|$XDG_CONFIG_DIR/starship.toml"
+    "auto|common/omp/keybindings.yml|$HOME/.omp/agent/keybindings.yml"
   )
-fi
-
-if [[ "$PLATFORM" == "windows" ]]; then
-  MAPPINGS+=(
-    "auto|windows/powershell/Microsoft.PowerShell_profile.ps1|$PWSH_DIR/Microsoft.PowerShell_profile.ps1"
-    "copy|windows/windows-terminal/settings.json|$WT_SETTINGS"
-    "auto|windows/omp/config.yml|$HOME/.omp/agent/config.yml"
-  )
+  if [[ "$PLATFORM" == "macos" ]]; then
+    MAPPINGS+=("auto|common/vscode/keybindings.json|$VSCODE_USER_DIR/keybindings.json")
+  elif [[ "$PLATFORM" == "windows" ]]; then
+    MAPPINGS+=(
+      "auto|common/vscode/keybindings.json|$VSCODE_USER_DIR/keybindings.json"
+      "copy|windows/windows-terminal/settings.json|$WT_SETTINGS"
+    )
+  fi
 else
-  # Add unix/* mappings here as macOS/Linux-only configs are added, e.g.:
-  # MAPPINGS+=("auto|unix/zsh/.zshrc|$HOME/.zshrc")
-  :
+  MAPPINGS=(
+    "auto|common/bash/.bashrc|$HOME/.bashrc"
+    "auto|common/bash/.bash_profile|$HOME/.bash_profile"
+    "auto|common/readline/.inputrc|$HOME/.inputrc"
+    "auto|common/starship/starship.toml|$XDG_CONFIG_DIR/starship.toml"
+    "auto|common/gh/config.yml|$GH_CONFIG_DIR/config.yml"
+    "auto|common/vscode/settings.json|$VSCODE_USER_DIR/settings.json"
+    "auto|common/vscode/keybindings.json|$VSCODE_USER_DIR/keybindings.json"
+    "auto|common/vscode/mcp.json|$VSCODE_USER_DIR/mcp.json"
+    "auto|common/omp/keybindings.yml|$HOME/.omp/agent/keybindings.yml"
+  )
+
+  # The full profile retains the existing VS Code/Cursor sharing behavior.
+  if [[ -d "$CURSOR_APP_DIR" || -d "$HOME/.cursor" ]]; then
+    MAPPINGS+=(
+      "auto|common/vscode/settings.json|$CURSOR_USER_DIR/settings.json"
+      "auto|common/vscode/keybindings.json|$CURSOR_USER_DIR/keybindings.json"
+      "auto|common/cursor/cli-config.json|$HOME/.cursor/cli-config.json"
+    )
+  fi
+
+  if [[ "$PLATFORM" == "windows" ]]; then
+    MAPPINGS+=(
+      "auto|windows/powershell/Microsoft.PowerShell_profile.ps1|$PWSH_DIR/Microsoft.PowerShell_profile.ps1"
+      "copy|windows/windows-terminal/settings.json|$WT_SETTINGS"
+      "auto|windows/omp/config.yml|$HOME/.omp/agent/config.yml"
+    )
+  fi
 fi
+
+if [[ "$PLATFORM" != "windows" ]]; then
+  MAPPINGS+=(
+    "auto|unix/tmux/tmux.conf|$HOME/.tmux.conf"
+    "auto|unix/zsh/keybindings.zsh|$HOME/.zshrc.d/95-keybindings.zsh"
+  )
+fi
+if [[ "$PLATFORM" == "macos" ]]; then
+  MAPPINGS+=(
+    "auto|unix/cmux/cmux.json|$XDG_CONFIG_DIR/cmux/cmux.json"
+    "auto|unix/ghostty/keybindings.conf|$XDG_CONFIG_DIR/ghostty/keybindings.conf"
+  )
+fi
+
+install_ghostty_include() {
+  local dst="$XDG_CONFIG_DIR/ghostty/config" tmp
+  mkdir -p "$(dirname "$dst")"
+  if [[ -d "$dst" ]]; then
+    echo "Refusing to replace a directory: $dst" >&2
+    return 1
+  fi
+  tmp="$(mktemp "${dst}.tmp.XXXXXX")"
+  # Canonical keybinds live in the include; retain appearance and other terminal settings.
+  if [[ -f "$dst" ]]; then
+    awk '
+      /^[[:space:]]*keybind[[:space:]]*=/ { next }
+      /^[[:space:]]*config-file[[:space:]]*=[[:space:]]*keybindings\.conf[[:space:]]*$/ { next }
+      { print }
+      END { print "config-file = keybindings.conf" }
+    ' "$dst" > "$tmp"
+  else
+    printf '%s\n' 'config-file = keybindings.conf' > "$tmp"
+  fi
+  if [[ ! -L "$dst" ]] && cmp -s "$tmp" "$dst"; then
+    rm -f "$tmp"
+    return 0
+  fi
+  backup_if_needed "$dst" "$tmp"
+  # mktemp leaves the generated wrapper private to the current user.
+  mv -f "$tmp" "$dst"
+  printf '  [include] %s -> keybindings.conf\n' "$dst"
+}
 
 cmd_apply() {
-  echo "Platform: $PLATFORM | Mode: $([[ $USE_SYMLINKS -eq 1 ]] && echo 'symlink' || echo 'copy')"
+  # Preflight the entire selected scope before replacing a single live file.
+  for entry in "${MAPPINGS[@]}"; do
+    IFS='|' read -r _ rel dst <<< "$entry"
+    if [[ -d "$dst" ]]; then
+      echo "Refusing to replace a directory: $dst" >&2
+      return 1
+    fi
+    if [[ "$PROFILE" == "workstation" && ! -f "$REPO_DIR/$rel" ]]; then
+      echo "Missing canonical config: $REPO_DIR/$rel" >&2
+      return 1
+    fi
+  done
+  if [[ "$PLATFORM" == "macos" && -d "$XDG_CONFIG_DIR/ghostty/config" ]]; then
+    echo "Refusing to replace a directory: $XDG_CONFIG_DIR/ghostty/config" >&2
+    return 1
+  fi
+  echo "Platform: $PLATFORM | Profile: $PROFILE | Mode: $([[ $USE_SYMLINKS -eq 1 ]] && echo 'symlink' || echo 'copy')"
   for entry in "${MAPPINGS[@]}"; do
     IFS='|' read -r mode rel dst <<< "$entry"
     local src="$REPO_DIR/$rel"
@@ -163,6 +251,9 @@ cmd_apply() {
     fi
   done
 
+  if [[ "$PLATFORM" == "macos" ]]; then
+    install_ghostty_include
+  fi
   if [[ $BACKED_UP -eq 1 ]]; then
     echo "Backed up previous differing files to: $BACKUP_ROOT"
   fi
@@ -172,12 +263,15 @@ cmd_collect() {
   echo "Collecting live configs into repo ($PLATFORM)..."
 
   # Group targets by repo relative path so shared files (VS Code + Cursor) pick newest modified target
-  declare -A seen_rels=()
-  local ordered_rels=()
+  # Indexed arrays also work in the system Bash 3.2 shipped with macOS.
+  local ordered_rels=() seen_rel found
   for entry in "${MAPPINGS[@]}"; do
     IFS='|' read -r _ rel _ <<< "$entry"
-    if [[ -z "${seen_rels[$rel]+set}" ]]; then
-      seen_rels["$rel"]=1
+    found=0
+    for seen_rel in "${ordered_rels[@]+"${ordered_rels[@]}"}"; do
+      [[ "$seen_rel" == "$rel" ]] && found=1
+    done
+    if [[ $found -eq 0 ]]; then
       ordered_rels+=("$rel")
     fi
   done
@@ -214,7 +308,7 @@ cmd_collect() {
     printf '  [pull] %s <- %s\n' "$rel" "$chosen"
   done
 
-  if command -v code >/dev/null 2>&1; then
+  if [[ "$PROFILE" == "all" ]] && command -v code >/dev/null 2>&1; then
     code --list-extensions | tr -d '\r' | sort > "$REPO_DIR/common/vscode/extensions.txt"
     echo "  [pull] common/vscode/extensions.txt <- code --list-extensions"
   fi
@@ -262,7 +356,7 @@ case "${1:-status}" in
   status|diff)        cmd_status ;;
   install-extensions) cmd_extensions ;;
   *)
-    echo "Usage: $0 {status|apply|collect|install-extensions}" >&2
+    echo "Usage: $0 {status|apply|collect|install-extensions} [all|workstation]" >&2
     exit 1
     ;;
 esac

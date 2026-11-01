@@ -6,3 +6,6 @@ tui.editor.deleteWordBackward: [alt+backspace]
 tui.editor.deleteWordForward: [alt+delete]
 tui.editor.deleteToLineStart: [ctrl+backspace]
 tui.editor.deleteToLineEnd: [ctrl+delete]
+
+# Keep temporary model selection alongside the editor navigation bindings.
+app.model.selectTemporary: [Alt+P, Alt+O]

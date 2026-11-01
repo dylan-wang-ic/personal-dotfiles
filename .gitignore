@@ -2,3 +2,7 @@
 Thumbs.db
 *.bak
 *.tmp
+
+# Python configuration tests
+__pycache__/
+*.py[cod]
