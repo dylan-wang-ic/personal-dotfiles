@@ -26,6 +26,8 @@ class WorkstationSyncTests(unittest.TestCase):
             'unix/ghostty/keybindings.conf': 'keybind = alt+left=esc:b\n',
             'unix/tmux/tmux.conf': 'bind-key -n C-M-Left select-pane -L\n',
             'unix/zsh/keybindings.zsh': 'bindkey -e\n',
+            'unix/omp/personal.yml': 'modelRoles:\n  default: test/canonical-model:low\n',
+            'unix/zsh/omp-env.zsh': 'export PI_CONFIG_FILES=test-overlay\n',
             'common/bash/.bashrc': 'REPLACED_BASHRC\n',
             'common/bash/.bash_profile': 'REPLACED_PROFILE\n',
             'common/readline/.inputrc': 'REPLACED_READLINE\n',
@@ -68,6 +70,8 @@ class WorkstationSyncTests(unittest.TestCase):
         expected = {
             '.config/starship.toml': 'common/starship/starship.toml',
             '.omp/agent/keybindings.yml': 'common/omp/keybindings.yml',
+            '.omp/agent/personal.yml': 'unix/omp/personal.yml',
+            '.zshrc.d/40-omp-env.zsh': 'unix/zsh/omp-env.zsh',
             '.tmux.conf': 'unix/tmux/tmux.conf',
             '.zshrc.d/95-keybindings.zsh': 'unix/zsh/keybindings.zsh',
             '.config/cmux/cmux.json': 'unix/cmux/cmux.json',
@@ -82,7 +86,7 @@ class WorkstationSyncTests(unittest.TestCase):
     def test_linux_only_deploys_shell_agent_prompt_and_tmux(self):
         self.env['TEST_PLATFORM'] = 'Linux'
         self.run_sync()
-        for target in ('.config/starship.toml', '.omp/agent/keybindings.yml', '.tmux.conf', '.zshrc.d/95-keybindings.zsh'):
+        for target in ('.config/starship.toml', '.omp/agent/keybindings.yml', '.omp/agent/personal.yml', '.tmux.conf', '.zshrc.d/40-omp-env.zsh', '.zshrc.d/95-keybindings.zsh'):
             self.assertTrue((self.home / target).is_symlink(), target)
         for target in ('.config/cmux', '.config/ghostty', '.config/Code', '.bash_profile', '.inputrc'):
             self.assertFalse((self.home / target).exists(), target)
