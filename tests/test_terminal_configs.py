@@ -68,6 +68,29 @@ class TerminalConfigTests(unittest.TestCase):
             },
         )
 
+    def test_cmux_owns_macos_option_and_command_text_editing(self) -> None:
+        """cmux's Ghostty fork pins alt/super arrow and backspace to its own
+        macOS defaults and discards config overrides for those triggers, so
+        Option never reaches the shell as Alt. cmux's text-editing gestures
+        restore the split: Option moves by word, Command moves by line."""
+        config = json.loads(CMUX_CONFIG.read_text())
+
+        terminal = config["terminal"]
+        self.assertIs(terminal["textEditingGestures"], True)
+        self.assertIs(terminal["textEditingGesturesInFullScreenApps"], True)
+        # The browser-style layout would give Command word movement, which is the
+        # opposite of the Windows Ctrl convention.
+        self.assertNotIn("textEditingCommandMovesByWord", terminal)
+
+        text = GHOSTTY_CONFIG.read_text()
+        for trigger in ("alt+arrow_left", "super+arrow_left", "alt+backspace", "super+backspace"):
+            with self.subTest(trigger=trigger):
+                self.assertNotIn(
+                    f"keybind = {trigger}=",
+                    text,
+                    "cmux discards this override; the mapping belongs in cmux.json",
+                )
+
     def test_cmux_config_passes_installed_semantic_validator(self) -> None:
         cmux = shutil.which("cmux")
         if cmux is None:
