@@ -134,10 +134,11 @@ if [[ "$PROFILE" == "workstation" ]]; then
   if [[ "$PLATFORM" == "macos" ]]; then
     MAPPINGS+=("auto|common/vscode/keybindings.json|$VSCODE_USER_DIR/keybindings.json")
   elif [[ "$PLATFORM" == "windows" ]]; then
-    MAPPINGS+=(
-      "auto|common/vscode/keybindings.json|$VSCODE_USER_DIR/keybindings.json"
-      "copy|windows/windows-terminal/settings.json|$WT_SETTINGS"
-    )
+    # Windows Terminal stores its whole profile list, default profile GUID and
+    # starting directory in the same settings.json as its key actions, so
+    # replacing it would replace shell profiles. That stays opt-in through the
+    # `all` profile; the workstation profile only claims VS Code keybindings.
+    MAPPINGS+=("auto|common/vscode/keybindings.json|$VSCODE_USER_DIR/keybindings.json")
   fi
 else
   MAPPINGS=(
@@ -183,18 +184,69 @@ if [[ "$PLATFORM" == "macos" ]]; then
   )
 fi
 
+# Ghostty accepts several spellings for the same key (super/cmd, ctrl/control,
+# alt/option, and the arrow_ prefixes). Fold a trigger to a canonical form so a
+# legacy binding written as `super+shift+left` still matches this repository's
+# `super+shift+arrow_left`.
+read -r -d '' GHOSTTY_TRIGGER_CANON_AWK <<'AWK' || true
+function canon(t,   n, parts, i, j, tmp, key, out) {
+  gsub(/[ \t]/, "", t)
+  t = tolower(t)
+  gsub(/arrow_/, "", t)
+  gsub(/command/, "super", t)
+  gsub(/cmd/, "super", t)
+  gsub(/control/, "ctrl", t)
+  gsub(/option/, "alt", t)
+  n = split(t, parts, "+")
+  key = parts[n]
+  for (i = 1; i < n - 1; i++) {
+    for (j = i + 1; j < n; j++) {
+      if (parts[j] < parts[i]) { tmp = parts[i]; parts[i] = parts[j]; parts[j] = tmp }
+    }
+  }
+  out = ""
+  for (i = 1; i < n; i++) out = out parts[i] "+"
+  return out key
+}
+AWK
+
+ghostty_managed_triggers() {
+  # Triggers this repository owns, read from the canonical include. Table
+  # entries (tmux-forward/...) belong to the raw-tmux forwarding table and are
+  # skipped: they never collide with a host configuration.
+  awk -F'=' "$GHOSTTY_TRIGGER_CANON_AWK"'
+    /^[[:space:]]*keybind[[:space:]]*=/ {
+      trigger = $2
+      sub(/[[:space:]]*=.*$/, "", trigger)
+      if (trigger ~ /\//) next
+      if (trigger != "") print canon(trigger)
+    }
+  ' "$REPO_DIR/unix/ghostty/keybindings.conf" | sort -u
+}
+
 install_ghostty_include() {
-  local dst="$XDG_CONFIG_DIR/ghostty/config" tmp
+  local dst="$XDG_CONFIG_DIR/ghostty/config" tmp triggers
   mkdir -p "$(dirname "$dst")"
   if [[ -d "$dst" ]]; then
     echo "Refusing to replace a directory: $dst" >&2
     return 1
   fi
+  triggers="$(mktemp)"
+  if [[ -f "$REPO_DIR/unix/ghostty/keybindings.conf" ]]; then
+    ghostty_managed_triggers > "$triggers"
+  fi
   tmp="$(mktemp "${dst}.tmp.XXXXXX")"
-  # Canonical keybinds live in the include; retain appearance and other terminal settings.
+  # Canonical keybinds live in the include. Remove only the triggers this
+  # repository owns so unrelated host bindings survive; keep every other line.
   if [[ -f "$dst" ]]; then
-    awk '
-      /^[[:space:]]*keybind[[:space:]]*=/ { next }
+    awk -v list="$triggers" "$GHOSTTY_TRIGGER_CANON_AWK"'
+      BEGIN { while ((getline line < list) > 0) if (line != "") managed[line] = 1 }
+      /^[[:space:]]*keybind[[:space:]]*=/ {
+        trigger = $0
+        sub(/^[[:space:]]*keybind[[:space:]]*=[[:space:]]*/, "", trigger)
+        sub(/[[:space:]]*=.*$/, "", trigger)
+        if (trigger != "" && canon(trigger) in managed) next
+      }
       /^[[:space:]]*config-file[[:space:]]*=[[:space:]]*keybindings\.conf[[:space:]]*$/ { next }
       { print }
       END { print "config-file = keybindings.conf" }
@@ -202,6 +254,7 @@ install_ghostty_include() {
   else
     printf '%s\n' 'config-file = keybindings.conf' > "$tmp"
   fi
+  rm -f "$triggers"
   if [[ ! -L "$dst" ]] && cmp -s "$tmp" "$dst"; then
     rm -f "$tmp"
     return 0
@@ -209,7 +262,20 @@ install_ghostty_include() {
   backup_if_needed "$dst" "$tmp"
   # mktemp leaves the generated wrapper private to the current user.
   mv -f "$tmp" "$dst"
-  printf '  [include] %s -> keybindings.conf\n' "$dst"
+  printf '  [include] %s -> keybindings.conf (host bindings for other keys kept)\n' "$dst"
+}
+
+ghostty_include_state() {
+  local dst="$XDG_CONFIG_DIR/ghostty/config"
+  if [[ ! -e "$dst" && ! -L "$dst" ]]; then
+    printf 'MISSING'
+  elif [[ -L "$dst" ]]; then
+    printf 'LEGACY-LINK'
+  elif grep -qE '^[[:space:]]*config-file[[:space:]]*=[[:space:]]*keybindings\.conf[[:space:]]*$' "$dst"; then
+    printf 'INCLUDED'
+  else
+    printf 'NO-INCLUDE'
+  fi
 }
 
 cmd_apply() {
@@ -315,7 +381,10 @@ cmd_collect() {
 }
 
 cmd_status() {
-  echo "Platform: $PLATFORM | Default apply mode: $([[ $USE_SYMLINKS -eq 1 ]] && echo 'symlink' || echo 'copy')"
+  echo "Platform: $PLATFORM | Profile: $PROFILE | Default apply mode: $([[ $USE_SYMLINKS -eq 1 ]] && echo 'symlink' || echo 'copy')"
+  if [[ "$PLATFORM" == "macos" ]]; then
+    printf '  %-9s %-44s (%s)\n' "[$(ghostty_include_state)]" 'ghostty key include' "$XDG_CONFIG_DIR/ghostty/config"
+  fi
   for entry in "${MAPPINGS[@]}"; do
     IFS='|' read -r _ rel dst <<< "$entry"
     local src="$REPO_DIR/$rel"

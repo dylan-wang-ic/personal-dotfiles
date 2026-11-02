@@ -87,9 +87,18 @@ class WorkstationSyncTests(unittest.TestCase):
         for target in ('.config/cmux', '.config/ghostty', '.config/Code', '.bash_profile', '.inputrc'):
             self.assertFalse((self.home / target).exists(), target)
 
-    def test_ghostty_preserves_appearance_and_moves_keys_to_one_include(self):
+    def test_ghostty_keeps_host_keys_and_removes_only_managed_triggers(self):
+        shutil.copy2(REPO / 'unix/ghostty/keybindings.conf', self.repo / 'unix/ghostty/keybindings.conf')
         original = self.root / 'legacy-ghostty'
-        original.write_text('font-family = My Font\nfont-size = 14\nbackground-opacity = 0.9\nkeybind = super+left=old\n')
+        original.write_text(
+            'font-family = My Font\n'
+            'font-size = 14\n'
+            'background-opacity = 0.9\n'
+            'keybind = super+left=old\n'
+            'keybind = cmd+t=new_tab\n'
+            'keybind = super+shift+left=text:legacy-selection\n'
+            'keybind = ctrl+alt+arrow_left=goto_split:left\n'
+        )
         target = self.home / '.config/ghostty/config'
         target.parent.mkdir(parents=True)
         target.symlink_to(original)
@@ -98,13 +107,26 @@ class WorkstationSyncTests(unittest.TestCase):
         text = target.read_text()
         self.assertIn('font-family = My Font', text)
         self.assertIn('background-opacity = 0.9', text)
-        self.assertNotIn('keybind = ', text)
+        self.assertIn('keybind = super+left=old', text)
+        self.assertIn('keybind = cmd+t=new_tab', text)
+        self.assertNotIn('super+shift+left=text:legacy-selection', text)
+        self.assertNotIn('ctrl+alt+arrow_left', text)
         self.assertEqual(text.count('config-file = keybindings.conf'), 1)
-        self.assertIn('keybind = super+left=old', original.read_text())
+        self.assertIn('keybind = super+shift+left=text:legacy-selection', original.read_text())
         backups = list((self.home / '.dotfiles-backup').glob('*/.config/ghostty/config'))
         self.assertEqual(len(backups), 1)
         self.assertFalse(backups[0].is_symlink())
         self.assertEqual(backups[0].read_text(), original.read_text())
+
+    def test_status_reports_profile_and_ghostty_include_state(self):
+        result = self.run_sync(command='status')
+        self.assertIn('Profile: workstation', result.stdout)
+        self.assertIn('ghostty key include', result.stdout)
+        self.assertIn('[MISSING]', result.stdout)
+
+        self.run_sync()
+        result = self.run_sync(command='status')
+        self.assertIn('[INCLUDED]', result.stdout)
 
     def test_second_apply_is_idempotent_and_does_not_make_more_backups(self):
         target = self.home / '.config/starship.toml'
@@ -150,14 +172,19 @@ class WorkstationSyncTests(unittest.TestCase):
         self.assertEqual(len(backups), 1)
         self.assertEqual(backups[0].read_text(), 'old prompt from removed legacy source\n')
 
-    def test_windows_workstation_preserves_profiles_and_uses_windows_terminal(self):
+    def test_windows_workstation_leaves_windows_terminal_profiles_alone(self):
         self.env['TEST_PLATFORM'] = 'MINGW64_NT-10.0'
         self.env['DOTFILES_COPY_ONLY'] = '1'
+        terminal = self.home / 'AppData/Local/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json'
+        terminal.parent.mkdir(parents=True)
+        terminal.write_text('{"defaultProfile":"{guid}","profiles":[]}\n')
         self.run_sync()
         self.assertFalse((self.home / '.bash_profile').exists())
         self.assertFalse((self.home / '.tmux.conf').exists())
-        terminal = self.home / 'AppData/Local/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json'
-        self.assertEqual(terminal.read_text(), '{"actions":[]}\n')
+        # Windows Terminal keeps its profile list, default profile and starting
+        # directory in the same file as its key actions, so the workstation
+        # profile does not touch it.
+        self.assertEqual(terminal.read_text(), '{"defaultProfile":"{guid}","profiles":[]}\n')
         self.assertTrue((self.home / 'AppData/Roaming/Code/User/keybindings.json').exists())
 
     def test_unknown_profile_is_rejected_without_writes(self):

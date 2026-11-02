@@ -53,11 +53,16 @@
   { "key": "ctrl+alt+shift+up", "command": "workbench.action.terminal.split", "when": "terminalFocus" },
   { "key": "ctrl+alt+shift+down", "command": "workbench.action.terminal.split", "when": "terminalFocus" },
 
-  // In terminal-pane focus, close only the active pane; in terminal-tab focus,
-  // close the active terminal tab. Neither action closes the VS Code window.
-  { "key": "ctrl+alt+w", "command": "workbench.action.terminal.killViewOrEditor", "when": "terminalFocus" },
+  // While the terminal content area has focus VS Code only runs commands listed
+  // in terminal.integrated.commandsToSkipShell; anything else is typed into the
+  // shell. Only commands from that default list are used here.
+  { "key": "ctrl+alt+w", "command": "workbench.action.terminal.kill", "when": "terminalFocus" },
   { "key": "ctrl+shift+left", "command": "workbench.action.terminal.focusPrevious", "when": "terminalFocus" },
   { "key": "ctrl+shift+right", "command": "workbench.action.terminal.focusNext", "when": "terminalFocus" },
-  { "key": "ctrl+shift+w", "command": "workbench.action.terminal.killViewOrEditor", "when": "terminalFocus" },
+  // A terminal in the editor area is its own tab, so closing it closes the tab.
+  // A panel terminal keeps the pane-only action; its tab close needs the
+  // terminal-tabs list, which is a separate focus context.
+  { "key": "ctrl+shift+w", "command": "workbench.action.terminal.killEditor", "when": "terminalFocus && editorFocus" },
+  { "key": "ctrl+shift+w", "command": "workbench.action.terminal.kill", "when": "terminalFocus && !editorFocus" },
   { "key": "ctrl+shift+w", "command": "workbench.action.terminal.killActiveTab", "when": "terminalTabsFocus" }
 ]

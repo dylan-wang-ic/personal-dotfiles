@@ -6,8 +6,15 @@ from pathlib import Path
 
 KEYBINDINGS_PATH = Path(__file__).parents[1] / "common" / "vscode" / "keybindings.json"
 
+VSCODE_BUNDLE = Path(
+    "/Applications/Visual Studio Code.app/Contents/Resources/app/out/vs/workbench/"
+    "workbench.desktop.main.js"
+)
+
 EDITOR_GROUP_WHEN = "editorFocus && !terminalFocus"
 TERMINAL_WHEN = "terminalFocus"
+TERMINAL_EDITOR_WHEN = "terminalFocus && editorFocus"
+TERMINAL_PANEL_WHEN = "terminalFocus && !editorFocus"
 TERMINAL_PANE_WHEN = "terminalFocus && terminalSplitPaneActive"
 TERMINAL_TABS_WHEN = "terminalTabsFocus"
 EDITOR_TEXT_WHEN = "editorTextFocus"
@@ -44,8 +51,9 @@ SUPPORTED_COMMANDS = {
     "workbench.action.terminal.focusNextPane",
     "workbench.action.terminal.focusPrevious",
     "workbench.action.terminal.focusPreviousPane",
+    "workbench.action.terminal.kill",
     "workbench.action.terminal.killActiveTab",
-    "workbench.action.terminal.killViewOrEditor",
+    "workbench.action.terminal.killEditor",
     "workbench.action.terminal.split",
 }
 
@@ -170,7 +178,7 @@ class VscodeKeybindingsTest(unittest.TestCase):
 
         self.assert_binding(
             "ctrl+alt+w",
-            "workbench.action.terminal.killViewOrEditor",
+            "workbench.action.terminal.kill",
             TERMINAL_WHEN,
         )
         self.assert_binding(
@@ -185,8 +193,13 @@ class VscodeKeybindingsTest(unittest.TestCase):
         )
         self.assert_binding(
             "ctrl+shift+w",
-            "workbench.action.terminal.killViewOrEditor",
-            TERMINAL_WHEN,
+            "workbench.action.terminal.killEditor",
+            TERMINAL_EDITOR_WHEN,
+        )
+        self.assert_binding(
+            "ctrl+shift+w",
+            "workbench.action.terminal.kill",
+            TERMINAL_PANEL_WHEN,
         )
         self.assert_binding(
             "ctrl+shift+w",
@@ -204,6 +217,31 @@ class VscodeKeybindingsTest(unittest.TestCase):
                 for binding in self.bindings
             )
         )
+
+    def test_terminal_focus_commands_survive_the_shell_skip_list(self):
+        """A terminal-focus keybinding only fires if VS Code does not forward it
+        to the shell. VS Code forwards every command that is missing from
+        terminal.integrated.commandsToSkipShell's default value."""
+        if not VSCODE_BUNDLE.is_file():
+            self.skipTest("installed VS Code bundle not found")
+
+        bundle = VSCODE_BUNDLE.read_text(errors="replace")
+        start = bundle.index('["workbench.action.terminal.clearSelection"')
+        end = bundle.index("]", start)
+        skip_shell = set(re.findall(r'"([^"]+)"', bundle[start:end]))
+        self.assertIn("workbench.action.terminal.kill", skip_shell)
+        # Regression guard: this command is absent from the default list, so a
+        # terminal-focus binding for it never fires and the key reaches the shell.
+        self.assertNotIn("workbench.action.terminal.killViewOrEditor", skip_shell)
+
+        for binding in self.bindings:
+            terms = [term.strip() for term in binding["when"].split("&&")]
+            # Positive terminal-content focus only; `!terminalFocus` bindings
+            # run in the editor and the tabs list is not a shell.
+            if "terminalFocus" not in terms or "terminalTabsFocus" in terms:
+                continue
+            with self.subTest(key=binding["key"], command=binding["command"], when=binding["when"]):
+                self.assertIn(binding["command"], skip_shell)
 
     def test_all_commands_are_verified_and_no_window_close_is_bound(self):
         commands = {binding["command"] for binding in self.bindings}

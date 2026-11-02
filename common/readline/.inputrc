@@ -36,7 +36,8 @@ $if mode=emacs
   "\e[1;5C": end-of-line         # Ctrl+Right
   "\e[1;3D": backward-word       # Alt+Left
   "\e[1;3C": forward-word        # Alt+Right
-  "\C-h": kill-whole-line        # Ctrl+Backspace
+  "\C-h": kill-whole-line        # Ctrl+Backspace (terminals that send BS)
+  "\e[127;5u": backward-kill-line # Ctrl+Backspace (Ghostty sends CSI-u)
   "\e\d": backward-kill-word     # Alt+Backspace
   "\e[3;5~": kill-line           # Ctrl+Delete
   "\e[3;3~": kill-word           # Alt+Delete

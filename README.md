@@ -23,13 +23,13 @@ The `workstation` profile owns:
 | All | Starship and OMP keybindings |
 | macOS/Linux | tmux and `~/.zshrc.d/95-keybindings.zsh` |
 | macOS | cmux, a Ghostty key include, and VS Code keybindings |
-| Windows | Windows Terminal and VS Code keybindings |
+| Windows | VS Code keybindings |
 
-It does **not** replace Bash profiles, Readline config, GitHub CLI config, VS Code settings/MCP, Cursor settings, or OMP provider/model configuration. The default `all` profile below retains those broader mappings.
+It does **not** replace Bash profiles, Readline config, GitHub CLI config, VS Code settings/MCP, Cursor settings, Windows Terminal settings, or OMP provider/model configuration. The default `all` profile below retains those broader mappings, including the Windows Terminal `settings.json` copy, which replaces the whole file (profile list, default profile GUID, starting directory).
 
 Changed files are backed up under `~/.dotfiles-backup/` before replacement. Backups contain effective file content even when the old config was a symlink. Symlinks keep the personal repository as the source of truth; `DOTFILES_COPY_ONLY=1` uses copies instead.
 
-On macOS the existing Ghostty `config` keeps its font, colors, and other appearance preferences. The installer removes separate `keybind` lines and adds `config-file = keybindings.conf`; that include points to this repository. Do not keep another set of keybinds in a work-specific repository.
+On macOS the existing Ghostty `config` keeps its font, colors, other appearance preferences, and any `keybind` line for a key this repository does not manage. The installer removes only the triggers this repository binds (comparing spellings such as `super`/`cmd` and `left`/`arrow_left`), then adds one `config-file = keybindings.conf` pointing at this repository. If that `config` was a symlink into another repository, the installer writes a regular file in its place so it never edits through the link; the link target is preserved in the backup as `.link-target`. Do not keep another set of these keybinds in a work-specific repository.
 
 The zsh file is installed late in `~/.zshrc.d/`. Shell setups that do not already source that directory must source the canonical file from their own `.zshrc`:
 
@@ -42,6 +42,8 @@ Open a new shell and a new OMP session after applying keys. Reload existing tmux
 ```bash
 tmux source-file "$HOME/.tmux.conf"
 ```
+
+`status` prints the active profile and the state of the Ghostty key include (`MISSING`, `LEGACY-LINK`, `NO-INCLUDE`, `INCLUDED`).
 
 Reload cmux configuration with its reload action after changing terminal keys. A tmux server and cmux do not automatically share a keybinding table; both files live here and implement the same input convention.
 
@@ -58,7 +60,9 @@ Reload cmux configuration with its reload action after changing terminal keys. A
 - `Ctrl+Shift+W`: close the active tab.
 - OMP keeps `Alt+P` and `Alt+O` for temporary model selection.
 
-VS Code deliberately gives `Ctrl+Shift+Left/Right` to tab navigation instead of line selection. macOS retains `Cmd+Shift+Left/Right` for line selection; Windows/Linux keep their built-in `Shift+Home/End` alternatives.
+VS Code deliberately gives `Ctrl+Shift+Left/Right` to tab navigation instead of line selection. macOS retains `Cmd+Shift+Left/Right` for line selection; Windows/Linux keep their built-in `Shift+Home/End` alternatives. `Ctrl+Left/Right` needs Mission Control's "Move left/right a space" shortcuts to be off; on macOS those are symbolic hotkeys 79 and 81.
+
+`Ctrl+Shift+W` in tmux runs `kill-window` with no confirmation, so it ends every pane in that window.
 
 ### Application boundaries
 
@@ -66,7 +70,7 @@ VS Code editor groups use directional focus/split and separate group/editor clos
 
 - Left/Up focus the previous terminal pane; Right/Down focus the next pane.
 - All four split shortcuts use the configured terminal split orientation.
-- With terminal content focused, **both close shortcuts terminate only the active terminal instance**, not every pane in the terminal tab. `Ctrl+Shift+W` closes a whole terminal tab only when the terminal-tabs list itself has focus. This avoids accidentally killing a different selected terminal group.
+- While the terminal content area has focus, VS Code runs a keybinding only if its command is in `terminal.integrated.commandsToSkipShell`; every other command is typed into the shell instead. These bindings use only commands from that default list, so `Ctrl+Alt+W` kills the active terminal pane and `Ctrl+Shift+W` closes the active terminal tab when the terminal sits in the editor area. A panel terminal has no equivalent command in that list, so there `Ctrl+Shift+W` also kills the active pane. `Ctrl+Shift+W` closes a whole terminal tab from the terminal-tabs list, which is a separate focus context.
 
 These terminal close actions terminate processes; they do not detach.
 
@@ -77,6 +81,13 @@ For remote work, prefer cmux's native tmux mirroring instead of nesting a raw tm
 There is an intentional boundary: cmux keeps `Ctrl+Shift+Left/Right/W` native even inside alternate-screen programs such as OMP. Those three keys therefore **cannot control raw nested tmux windows inside cmux**, even with forwarding enabled. Use tmux's prefix bindings for inner windows, or use the native mirror. Standalone Ghostty has no cmux interception and forwards all configured keys in this table.
 
 macOS system shortcuts must also release these combinations. Changing OS shortcuts is a separate, explicit setup step, not part of this sync script.
+
+### Tradeoffs to know about
+
+- Ghostty sends `Ctrl+Backspace` as `CSI 127;5u`. Zsh and Readline (`common/readline/.inputrc`, `all` profile) understand it; other programs and remote hosts that do not will receive the literal sequence. Hosts with plain Readline need that binding added there too.
+- `macos-option-as-alt = true` makes Option a terminal Alt, so Option combinations stop typing characters such as `é` or `€`. The word-editing convention depends on it.
+- `~/.zshrc.d/95-keybindings.zsh` sets `bindkey -e` and loads late, so it owns the main keymap. An earlier `bindkey -v` in another `~/.zshrc.d` file is overridden.
+- tmux uses `extended-keys always`, not `on`, because the zsh `Ctrl+Backspace` binding needs tmux to forward extended keys without the inner program asking first. `terminal-features` registers `extkeys` for `xterm-ghostty`; a remote host whose `TERM` falls back to another value may not get that feature.
 
 ## Full sync
 
@@ -98,7 +109,7 @@ python3 -m unittest discover -s tests -p 'test_*.py'
 bash -n sync.sh
 ```
 
-The sync tests use isolated homes and platform fixtures. They do not overwrite the running user's settings or require access to work credentials.
+The sync tests use isolated homes and platform fixtures. They do not overwrite the running user's settings or require access to work credentials. The VS Code tests read the installed bundle to check that every terminal-focus binding uses a command from `commandsToSkipShell`'s default value, and skip that check when VS Code is absent.
 
 ## Manual snapshots
 
