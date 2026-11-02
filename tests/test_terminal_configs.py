@@ -23,10 +23,15 @@ CANONICAL_CMUX_BINDINGS = {
     "focusDown": "ctrl+alt+down",
     "splitRight": "ctrl+alt+shift+right",
     "splitDown": "ctrl+alt+shift+down",
+    "newSurface": "ctrl+shift+t",
     "closeTab": "ctrl+shift+w",
     "prevSurface": "ctrl+shift+left",
     "nextSurface": "ctrl+shift+right",
 }
+
+# Every Ctrl+Shift binding cmux owns must act on a surface (tab), never on a
+# workspace or window.
+TAB_ACTIONS = {"newSurface", "closeTab", "prevSurface", "nextSurface"}
 
 TMUX_FORWARD_SEQUENCES = {
     "ctrl+alt+arrow_left": "csi:1;7D",
@@ -38,6 +43,7 @@ TMUX_FORWARD_SEQUENCES = {
     "ctrl+alt+shift+arrow_up": "csi:1;8A",
     "ctrl+alt+shift+arrow_down": "csi:1;8B",
     "ctrl+alt+w": "csi:119;7u",
+    "ctrl+shift+t": "csi:116;6u",
     "ctrl+shift+w": "csi:119;6u",
     "ctrl+shift+arrow_left": "csi:1;6D",
     "ctrl+shift+arrow_right": "csi:1;6C",
@@ -60,8 +66,9 @@ class TerminalConfigTests(unittest.TestCase):
                 "splitRight": "terminalFocus && !terminalAlternateScreen",
                 "splitDown": "terminalFocus && !terminalAlternateScreen",
                 # OMP also uses the alternate screen. cmux must keep ownership of
-                # surface-tab navigation and close there; embedded Ghostty tab
-                # actions target workspaces instead of cmux surface tabs.
+                # surface-tab navigation, creation and close there; embedded
+                # Ghostty tab actions target workspaces instead of cmux surfaces.
+                "newSurface": "terminalFocus",
                 "closeTab": "terminalFocus",
                 "prevSurface": "terminalFocus",
                 "nextSurface": "terminalFocus",
@@ -90,6 +97,33 @@ class TerminalConfigTests(unittest.TestCase):
                     text,
                     "cmux discards this override; the mapping belongs in cmux.json",
                 )
+
+    def test_every_ctrl_shift_binding_is_a_tab_action(self) -> None:
+        config = json.loads(CMUX_CONFIG.read_text())
+
+        ctrl_shift = {
+            action: binding
+            for action, binding in config["shortcuts"]["bindings"].items()
+            if binding.startswith("ctrl+shift+")
+        }
+        self.assertEqual(
+            ctrl_shift,
+            {
+                "newSurface": "ctrl+shift+t",
+                "closeTab": "ctrl+shift+w",
+                "prevSurface": "ctrl+shift+left",
+                "nextSurface": "ctrl+shift+right",
+            },
+        )
+        self.assertTrue(
+            set(ctrl_shift) <= TAB_ACTIONS,
+            f"non-tab Ctrl+Shift bindings: {sorted(set(ctrl_shift) - TAB_ACTIONS)}",
+        )
+        self.assertIs(config["app"]["keepWorkspaceOpenWhenClosingLastSurface"], True)
+
+        # Ghostty's previous_tab targets cmux workspaces, so the include must
+        # release Ctrl+Shift+Tab instead of leaving a workspace action on it.
+        self.assertIn("keybind = ctrl+shift+tab=unbind", GHOSTTY_CONFIG.read_text())
 
     def test_cmux_config_passes_installed_semantic_validator(self) -> None:
         cmux = shutil.which("cmux")
@@ -184,6 +218,7 @@ class TerminalConfigTests(unittest.TestCase):
             'bind-key -n C-M-S-Up split-window -v -b -c "#{pane_current_path}"',
             'bind-key -n C-M-S-Down split-window -v -c "#{pane_current_path}"',
             "bind-key -n C-M-w kill-pane",
+            "bind-key -n C-S-t new-window -c \"#{pane_current_path}\"",
             "bind-key -n C-S-w kill-window",
             "bind-key -n C-S-Left previous-window",
             "bind-key -n C-S-Right next-window",

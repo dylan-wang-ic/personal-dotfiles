@@ -1,6 +1,9 @@
 {
   "$schema": "https://raw.githubusercontent.com/manaflow-ai/cmux/main/web/data/cmux.schema.json",
   "schemaVersion": 1,
+  "app": {
+    "keepWorkspaceOpenWhenClosingLastSurface": true
+  },
   "terminal": {
     "textEditingGestures": true,
     "textEditingGesturesInFullScreenApps": true
@@ -15,7 +18,8 @@
       "splitDown": "ctrl+alt+shift+down",
       "closeTab": "ctrl+shift+w",
       "prevSurface": "ctrl+shift+left",
-      "nextSurface": "ctrl+shift+right"
+      "nextSurface": "ctrl+shift+right",
+      "newSurface": "ctrl+shift+t"
     },
     "when": {
       "focusLeft": "terminalFocus && !terminalAlternateScreen",
@@ -26,7 +30,8 @@
       "splitDown": "terminalFocus && !terminalAlternateScreen",
       "closeTab": "terminalFocus",
       "prevSurface": "terminalFocus",
-      "nextSurface": "terminalFocus"
+      "nextSurface": "terminalFocus",
+      "newSurface": "terminalFocus"
     }
   }
 }

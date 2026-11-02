@@ -57,6 +57,7 @@ Reload cmux configuration with its reload action after changing terminal keys. A
 - `Ctrl+Alt+Shift+arrows`: split a pane/group where the application supports that direction.
 - `Ctrl+Alt+W`: close the active pane/group.
 - `Ctrl+Shift+Left/Right`: previous/next tab.
+- `Ctrl+Shift+T`: new tab.
 - `Ctrl+Shift+W`: close the active tab.
 - OMP keeps `Alt+P` and `Alt+O` for temporary model selection.
 
@@ -77,6 +78,8 @@ VS Code editor groups use directional focus/split and separate group/editor clos
 These terminal close actions terminate processes; they do not detach.
 
 cmux's Ghostty fork pins `alt+arrow_*`, `super+arrow_*`, `alt+backspace` and `super+backspace` to its own macOS defaults and silently discards config overrides for those triggers, which is why Option+Left arrived as Ctrl+Left and looked like Ctrl. Rebinding them in the Ghostty include does nothing; the mapping has to live in `terminal.textEditingGestures`, and `textEditingGesturesInFullScreenApps` extends it into tmux, OMP and other alternate-screen programs. Both are set in `unix/cmux/cmux.json`.
+
+Every `Ctrl+Shift` binding in cmux acts on a tab, never on a workspace or window. Closing the last tab used to take the workspace with it, so `app.keepWorkspaceOpenWhenClosingLastSurface` is on: `Ctrl+Shift+W` now leaves an empty workspace instead of destroying it. Ghostty's own `Ctrl+Shift+Tab` switches cmux *workspaces*, and cmux allows one shortcut per action with no built-in alias for surface navigation, so the include releases that key rather than let it move the workspace selection.
 
 cmux uses native surface tabs, while tmux calls its tabs windows. `Ctrl+Alt+W` closes the focused cmux surface, not all tabs in a split-pane group. cmux's native remote-tmux mirror currently supports right/down splits, but not left/up placement. Use right/down there; local cmux and raw tmux support all four directions.
 
