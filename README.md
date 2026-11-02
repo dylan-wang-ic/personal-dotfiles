@@ -60,6 +60,8 @@ Reload cmux configuration with its reload action after changing terminal keys. A
 - `Ctrl+Shift+W`: close the active tab.
 - OMP keeps `Alt+P` and `Alt+O` for temporary model selection.
 
+On macOS the Windows modifiers map to **Option as Alt** and **Command as Ctrl**. cmux applies that through `terminal.textEditingGestures`, so Option+Left moves by word and Command+Left moves to the line start. cmux sends the emacs line-editor encodings of those keys (`Esc b`, `Ctrl+A`, `Ctrl+U`, `Ctrl+K`, `Esc d`), which zsh, Readline and OMP already understand; the OMP file therefore lists both the modifier and the emacs form for each action.
+
 VS Code deliberately gives `Ctrl+Shift+Left/Right` to tab navigation instead of line selection. macOS retains `Cmd+Shift+Left/Right` for line selection; Windows/Linux keep their built-in `Shift+Home/End` alternatives. `Ctrl+Left/Right` needs Mission Control's "Move left/right a space" shortcuts to be off; on macOS those are symbolic hotkeys 79 and 81.
 
 `Ctrl+Shift+W` in tmux runs `kill-window` with no confirmation, so it ends every pane in that window.
@@ -74,6 +76,8 @@ VS Code editor groups use directional focus/split and separate group/editor clos
 
 These terminal close actions terminate processes; they do not detach.
 
+cmux's Ghostty fork pins `alt+arrow_*`, `super+arrow_*`, `alt+backspace` and `super+backspace` to its own macOS defaults and silently discards config overrides for those triggers, which is why Option+Left arrived as Ctrl+Left and looked like Ctrl. Rebinding them in the Ghostty include does nothing; the mapping has to live in `terminal.textEditingGestures`, and `textEditingGesturesInFullScreenApps` extends it into tmux, OMP and other alternate-screen programs. Both are set in `unix/cmux/cmux.json`.
+
 cmux uses native surface tabs, while tmux calls its tabs windows. `Ctrl+Alt+W` closes the focused cmux surface, not all tabs in a split-pane group. cmux's native remote-tmux mirror currently supports right/down splits, but not left/up placement. Use right/down there; local cmux and raw tmux support all four directions.
 
 For remote work, prefer cmux's native tmux mirroring instead of nesting a raw tmux client. In a **raw local/SSH tmux client**, press `Ctrl+Alt+T` to enable the Ghostty `tmux-forward` key table; press it again to return to native pane controls. This forwards pane focus/split/close keys to tmux while it uses the alternate screen. Do not enable it in the native mirror.
@@ -86,6 +90,8 @@ macOS system shortcuts must also release these combinations. Changing OS shortcu
 
 - Ghostty sends `Ctrl+Backspace` as `CSI 127;5u`. Zsh and Readline (`common/readline/.inputrc`, `all` profile) understand it; other programs and remote hosts that do not will receive the literal sequence. Hosts with plain Readline need that binding added there too.
 - `macos-option-as-alt = true` makes Option a terminal Alt, so Option combinations stop typing characters such as `é` or `€`. The word-editing convention depends on it.
+- With cmux gestures on, Command+Left sends `Ctrl+A` even inside full-screen programs, so Command+Left in vim or less triggers that program's `Ctrl+A` binding.
+- A running OMP session keeps its keybindings from launch. Restart OMP after changing `common/omp/keybindings.yml`.
 - `~/.zshrc.d/95-keybindings.zsh` sets `bindkey -e` and loads late, so it owns the main keymap. An earlier `bindkey -v` in another `~/.zshrc.d` file is overridden.
 - tmux uses `extended-keys always`, not `on`, because the zsh `Ctrl+Backspace` binding needs tmux to forward extended keys without the inner program asking first. `terminal-features` registers `extkeys` for `xterm-ghostty`; a remote host whose `TERM` falls back to another value may not get that feature.
 
