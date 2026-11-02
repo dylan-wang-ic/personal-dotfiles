@@ -94,12 +94,10 @@ function summary(label: string, list: string[]): string {
 }
 
 export default function modelDrift(pi: ExtensionPi): void {
-	// Pending notice: returned once, then committed when the turn ends. A dropped
-	// message (aborted turn) leaves the snapshot stale so the next session re-reports.
-	let pending: { message: string; snapshot: Snapshot; broken: boolean } | undefined;
+	let reported = false;
 
 	pi.on("before_agent_start", (_event, ctx) => {
-		if (ctx?.agent?.kind !== "main" || pending) return undefined;
+		if (ctx?.agent?.kind !== "main" || reported) return undefined;
 		try {
 			const now = snapshot(ctx?.models);
 			const previous = (() => {
@@ -149,19 +147,23 @@ export default function modelDrift(pi: ExtensionPi): void {
 				"",
 				"Review unix/omp/personal.yml in ~/dotfiles (installed as ~/.omp/agent/personal.yml)",
 				"against the new catalog: a pinned model may be superseded, repriced, or dropped.",
-				broken.length ? "This notice repeats until every overlay selector resolves." : "Snapshot updates when this turn ends.",
+				broken.length ? "This notice repeats until every overlay selector resolves." : "Snapshot updated; this notice fires once per change.",
 			);
-			pending = { message: ["gohan's managed OMP config moved.", ...notes].join("\n"), snapshot: now, broken: broken.length > 0 };
-			return { message: { customType: "model-drift", content: pending.message, display: true, attribution: "system" } };
+			reported = true;
+			// Commit immediately: turn_end does not fire in every mode, and a stale
+			// snapshot only costs one extra notice.
+			if (!broken.length) writeFileSync(STATE, JSON.stringify(now, null, 2));
+			return {
+				message: {
+					customType: "model-drift",
+					content: ["gohan's managed OMP config moved.", ...notes].join("\n"),
+					display: true,
+					attribution: "system",
+				},
+			};
 		} catch (error) {
 			pi.logger?.warn?.(`model-drift hook failed: ${String(error)}`);
 			return undefined;
 		}
-	});
-
-	pi.on("turn_end", (_event, ctx) => {
-		if (ctx?.agent?.kind !== "main" || !pending) return;
-		if (!pending.broken) writeFileSync(STATE, JSON.stringify(pending.snapshot, null, 2));
-		pending = undefined;
 	});
 }
