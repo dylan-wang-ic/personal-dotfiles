@@ -67,6 +67,25 @@ VS Code deliberately gives `Ctrl+Shift+Left/Right` to tab navigation instead of 
 
 `Ctrl+Shift+W` in tmux runs `kill-window` with no confirmation, so it ends every pane in that window.
 
+### Terminology
+
+cmux has one more level than iTerm2 or Windows Terminal, and it uses "tab" at two of those levels.
+
+| cmux | iTerm2 / Windows Terminal | tmux | VS Code |
+|---|---|---|---|
+| Window | Window | — | Window |
+| Workspace (sidebar entry) | Tab | Session | Window |
+| Pane (split region) | Pane | Pane | Editor group |
+| Surface (tab inside a pane) | — (their tab holds the panes) | Window | Editor tab |
+| Panel (the terminal itself) | — | — | — |
+
+Consequences:
+
+- In iTerm2 and Windows Terminal a tab *contains* panes, so closing a tab closes all its panes. In cmux a **pane contains tabs**: every pane has its own tab bar, and closing a tab closes one surface.
+- The sidebar calls workspace entries "tabs" (⌘N new, ⌘1–⌘9 jump, ⌘⇧W close), while a surface is also "a tab within a pane" (⌘T new, ⌘W close).
+- `cmux.json` action ids follow the socket vocabulary, not the UI: `newTab` creates a **workspace**, `newSurface` creates a **tab**, `closeTab` closes a **surface**, `closeWorkspace` closes a workspace, and `nextSidebarTab`/`prevSidebarTab` move between workspaces. Every `Ctrl+Shift` binding in this repository is a surface action for that reason.
+- cmux has no "close pane" action. `Ctrl+Alt+W` runs Ghostty's `close_surface`, so it closes the focused tab; the pane disappears only once its last tab closes.
+
 ### Application boundaries
 
 VS Code editor groups use directional focus/split and separate group/editor close actions. Its integrated terminal has narrower APIs:
