@@ -1,21 +1,68 @@
 [
-  // Mac-style word navigation (Alt instead of Ctrl)
+  // Word-part editing, matching the Alt scheme used by Windows Terminal.
   { "key": "alt+left", "command": "cursorWordPartLeft", "when": "editorTextFocus" },
   { "key": "alt+right", "command": "cursorWordPartRight", "when": "editorTextFocus" },
-
-  // Mac-style word selection (Alt+Shift)
   { "key": "alt+shift+left", "command": "cursorWordPartLeftSelect", "when": "editorTextFocus" },
   { "key": "alt+shift+right", "command": "cursorWordPartRightSelect", "when": "editorTextFocus" },
-
-  // Mac-style delete word (Alt+Backspace/Delete)
   { "key": "alt+backspace", "command": "deleteWordPartLeft", "when": "editorTextFocus && !editorReadonly" },
   { "key": "alt+delete", "command": "deleteWordPartRight", "when": "editorTextFocus && !editorReadonly" },
 
-  // Mac-style line navigation (Ctrl for Home/End of line)
+  // Line editing: Ctrl moves to and deletes through the beginning/end of the line.
   { "key": "ctrl+left", "command": "cursorHome", "when": "editorTextFocus" },
   { "key": "ctrl+right", "command": "cursorEnd", "when": "editorTextFocus" },
+  { "key": "ctrl+backspace", "command": "deleteAllLeft", "when": "editorTextFocus && !editorReadonly" },
+  { "key": "ctrl+delete", "command": "deleteAllRight", "when": "editorTextFocus && !editorReadonly" },
 
-  // Mac-style line selection (Ctrl+Shift for select to Home/End)
-  { "key": "ctrl+shift+left", "command": "cursorHomeSelect", "when": "editorTextFocus" },
-  { "key": "ctrl+shift+right", "command": "cursorEndSelect", "when": "editorTextFocus" }
+  // Ctrl+Shift+Left/Right are tab navigation. Keep line selection on macOS with
+  // Cmd+Shift+Left/Right; Windows/Linux retain the built-in Shift+Home/End keys.
+  { "key": "cmd+shift+left", "command": "cursorHomeSelect", "when": "editorTextFocus && isMac" },
+  { "key": "cmd+shift+right", "command": "cursorEndSelect", "when": "editorTextFocus && isMac" },
+
+  // Group-only editor focus. These commands do not fall through to the sidebar or panel.
+  { "key": "ctrl+alt+left", "command": "workbench.action.focusLeftGroup", "when": "editorFocus && !terminalFocus" },
+  { "key": "ctrl+alt+right", "command": "workbench.action.focusRightGroup", "when": "editorFocus && !terminalFocus" },
+  { "key": "ctrl+alt+up", "command": "workbench.action.focusAboveGroup", "when": "editorFocus && !terminalFocus" },
+  { "key": "ctrl+alt+down", "command": "workbench.action.focusBelowGroup", "when": "editorFocus && !terminalFocus" },
+
+  // Directional editor-group splits.
+  { "key": "ctrl+alt+shift+left", "command": "workbench.action.splitEditorLeft", "when": "editorFocus && !terminalFocus" },
+  { "key": "ctrl+alt+shift+right", "command": "workbench.action.splitEditorRight", "when": "editorFocus && !terminalFocus" },
+  { "key": "ctrl+alt+shift+up", "command": "workbench.action.splitEditorUp", "when": "editorFocus && !terminalFocus" },
+  { "key": "ctrl+alt+shift+down", "command": "workbench.action.splitEditorDown", "when": "editorFocus && !terminalFocus" },
+
+  // Close the active editor group without closing the VS Code window.
+  { "key": "ctrl+alt+w", "command": "workbench.action.closeEditorsAndGroup", "when": "editorFocus && !terminalFocus" },
+
+  // Adjacent editor tabs, not MRU navigation. This intentionally overrides the
+  // usual Ctrl+Shift+Left/Right text-selection bindings in the editor.
+  { "key": "ctrl+shift+left", "command": "workbench.action.previousEditor", "when": "editorFocus && !terminalFocus" },
+  { "key": "ctrl+shift+right", "command": "workbench.action.nextEditor", "when": "editorFocus && !terminalFocus" },
+  { "key": "ctrl+shift+w", "command": "workbench.action.closeActiveEditor", "when": "editorFocus && !terminalFocus" },
+
+  // VS Code exposes only previous/next terminal-pane focus, not directional
+  // terminal navigation. Left/Up cycle previous; Right/Down cycle next.
+  { "key": "ctrl+alt+left", "command": "workbench.action.terminal.focusPreviousPane", "when": "terminalFocus && terminalSplitPaneActive" },
+  { "key": "ctrl+alt+up", "command": "workbench.action.terminal.focusPreviousPane", "when": "terminalFocus && terminalSplitPaneActive" },
+  { "key": "ctrl+alt+right", "command": "workbench.action.terminal.focusNextPane", "when": "terminalFocus && terminalSplitPaneActive" },
+  { "key": "ctrl+alt+down", "command": "workbench.action.terminal.focusNextPane", "when": "terminalFocus && terminalSplitPaneActive" },
+
+  // VS Code's terminal split command has no direction argument; its layout
+  // follows the terminal's current orientation instead of faking arrow-specific commands.
+  { "key": "ctrl+alt+shift+left", "command": "workbench.action.terminal.split", "when": "terminalFocus" },
+  { "key": "ctrl+alt+shift+right", "command": "workbench.action.terminal.split", "when": "terminalFocus" },
+  { "key": "ctrl+alt+shift+up", "command": "workbench.action.terminal.split", "when": "terminalFocus" },
+  { "key": "ctrl+alt+shift+down", "command": "workbench.action.terminal.split", "when": "terminalFocus" },
+
+  // While the terminal content area has focus VS Code only runs commands listed
+  // in terminal.integrated.commandsToSkipShell; anything else is typed into the
+  // shell. Only commands from that default list are used here.
+  { "key": "ctrl+alt+w", "command": "workbench.action.terminal.kill", "when": "terminalFocus" },
+  { "key": "ctrl+shift+left", "command": "workbench.action.terminal.focusPrevious", "when": "terminalFocus" },
+  { "key": "ctrl+shift+right", "command": "workbench.action.terminal.focusNext", "when": "terminalFocus" },
+  // A terminal in the editor area is its own tab, so closing it closes the tab.
+  // A panel terminal keeps the pane-only action; its tab close needs the
+  // terminal-tabs list, which is a separate focus context.
+  { "key": "ctrl+shift+w", "command": "workbench.action.terminal.killEditor", "when": "terminalFocus && editorFocus" },
+  { "key": "ctrl+shift+w", "command": "workbench.action.terminal.kill", "when": "terminalFocus && !editorFocus" },
+  { "key": "ctrl+shift+w", "command": "workbench.action.terminal.killActiveTab", "when": "terminalTabsFocus" }
 ]
