@@ -56,9 +56,9 @@ Reload cmux configuration with its reload action after changing terminal keys. A
 - `Ctrl+Alt+arrows`: focus a pane/editor group.
 - `Ctrl+Alt+Shift+arrows`: split a pane/group where the application supports that direction.
 - `Ctrl+Alt+W`: close the active pane/group (tmux and VS Code only; cmux has no such action, see below).
-- `Ctrl+Shift+Left/Right`: previous/next tab.
-- `Ctrl+Shift+T`: new tab.
-- `Ctrl+Shift+W`: close the active tab.
+- `Cmd+Shift+Left/Right` in cmux, `Ctrl+Shift+Left/Right` in tmux: previous/next tab.
+- `Cmd+Shift+T` in cmux, `Ctrl+Shift+T` in tmux: new tab.
+- `Cmd+Shift+W` in cmux, `Ctrl+Shift+W` in tmux: close the active tab.
 - OMP keeps `Alt+P` and `Alt+O` for temporary model selection.
 
 On macOS the Windows modifiers map to **Option as Alt** and **Command as Ctrl**. cmux applies that through `terminal.textEditingGestures`, so Option+Left moves by word and Command+Left moves to the line start. cmux sends the emacs line-editor encodings of those keys (`Esc b`, `Ctrl+A`, `Ctrl+U`, `Ctrl+K`, `Esc d`), which zsh, Readline and OMP already understand; the OMP file therefore lists both the modifier and the emacs form for each action.
@@ -82,9 +82,9 @@ cmux has one more level than iTerm2 or Windows Terminal, and it uses "tab" at tw
 Consequences:
 
 - In iTerm2 and Windows Terminal a tab *contains* panes, so closing a tab closes all its panes. In cmux a **pane contains tabs**: every pane has its own tab bar, and closing a tab closes one surface.
-- The sidebar calls workspace entries "tabs" (⌘N new, ⌘1–⌘9 jump, ⌘⇧W close), while a surface is also "a tab within a pane" (⌘T new, ⌘W close).
-- `cmux.json` action ids follow the socket vocabulary, not the UI: `newTab` creates a **workspace**, `newSurface` creates a **tab**, `closeTab` closes a **surface**, `closeWorkspace` closes a workspace, and `nextSidebarTab`/`prevSidebarTab` move between workspaces. Every `Ctrl+Shift` binding in this repository is a surface action for that reason.
-- cmux has no "close pane" action. `close_surface` closes the focused tab and the pane disappears only with its last tab, so `Ctrl+Alt+W` would close a tab under a pane-shaped name. The include drops that key (`ignore`) in cmux; close tabs with `Ctrl+Shift+W`. Raw tmux still gets `Ctrl+Alt+W` and closes the real pane.
+- The sidebar calls workspace entries "tabs" (⌘N new, ⌘1–⌘9 jump), while a surface is also "a tab within a pane" (⌘T new, ⌘W close). ⌘⇧W is cmux's *workspace* close by default, so this repository releases it and puts the tab close there instead.
+- `cmux.json` action ids follow the socket vocabulary, not the UI: `newTab` creates a **workspace**, `newSurface` creates a **tab**, `closeTab` closes a **surface**, `closeWorkspace` closes a workspace, and `nextSidebarTab`/`prevSidebarTab` move between workspaces. Every `Cmd+Shift` binding in cmux (and `Ctrl+Shift` in tmux) is a surface action for that reason.
+- cmux has no "close pane" action. `close_surface` closes the focused tab and the pane disappears only with its last tab, so `Ctrl+Alt+W` would close a tab under a pane-shaped name. The include drops that key (`ignore`) in cmux; close tabs with `Cmd+Shift+W`. Raw tmux still gets `Ctrl+Alt+W` and closes the real pane.
 
 ### Application boundaries
 
@@ -98,13 +98,13 @@ These terminal close actions terminate processes; they do not detach.
 
 cmux's Ghostty fork pins `alt+arrow_*`, `super+arrow_*`, `alt+backspace` and `super+backspace` to its own macOS defaults and silently discards config overrides for those triggers, which is why Option+Left arrived as Ctrl+Left and looked like Ctrl. Rebinding them in the Ghostty include does nothing; the mapping has to live in `terminal.textEditingGestures`, and `textEditingGesturesInFullScreenApps` extends it into tmux, OMP and other alternate-screen programs. Both are set in `unix/cmux/cmux.json`.
 
-Every `Ctrl+Shift` binding in cmux acts on a tab, never on a workspace or window. Closing the last tab used to take the workspace with it, so `app.keepWorkspaceOpenWhenClosingLastSurface` is on: `Ctrl+Shift+W` now leaves an empty workspace instead of destroying it. Ghostty's own `Ctrl+Shift+Tab` switches cmux *workspaces*, and cmux allows one shortcut per action with no built-in alias for surface navigation, so the include releases that key rather than let it move the workspace selection.
+Every `Cmd+Shift` binding in cmux acts on a tab, never on a workspace or window. On macOS Cmd plays the role Ctrl has on Windows, so the cmux keys are Cmd+Shift while tmux keeps Ctrl+Shift. `closeWorkspace` (⌘⇧W) and `reopenClosedBrowserPanel` (⌘⇧T) are released in `cmux.json` so nothing else answers to those strokes; close workspaces from the sidebar. Closing the last tab used to take the workspace with it, so `app.keepWorkspaceOpenWhenClosingLastSurface` is on: `Cmd+Shift+W` now leaves an empty workspace instead of destroying it. Ghostty's own `Ctrl+Shift+Tab` switches cmux *workspaces*, and cmux allows one shortcut per action with no built-in alias for surface navigation, so the include releases that key rather than let it move the workspace selection.
 
 cmux uses native surface tabs, while tmux calls its tabs windows. cmux cannot close a pane directly, so `Ctrl+Alt+W` is a no-op there instead of closing a tab that looks like a pane. cmux's native remote-tmux mirror currently supports right/down splits, but not left/up placement. Use right/down there; local cmux and raw tmux support all four directions.
 
 For remote work, prefer cmux's native tmux mirroring instead of nesting a raw tmux client. In a **raw local/SSH tmux client**, press `Ctrl+Alt+T` to enable the Ghostty `tmux-forward` key table; press it again to return to native pane controls. This forwards pane focus/split/close keys to tmux while it uses the alternate screen. Do not enable it in the native mirror.
 
-There is an intentional boundary: cmux keeps `Ctrl+Shift+Left/Right/W` native even inside alternate-screen programs such as OMP. Those three keys therefore **cannot control raw nested tmux windows inside cmux**, even with forwarding enabled. Use tmux's prefix bindings for inner windows, or use the native mirror. Standalone Ghostty has no cmux interception and forwards all configured keys in this table.
+There is an intentional boundary: cmux keeps `Cmd+Shift+Left/Right/W` native even inside alternate-screen programs such as OMP. Those three keys therefore **cannot control raw nested tmux windows inside cmux**, even with forwarding enabled. Use tmux's prefix bindings for inner windows, or use the native mirror. Standalone Ghostty has no cmux interception and forwards all configured keys in this table.
 
 macOS system shortcuts must also release these combinations. Changing OS shortcuts is a separate, explicit setup step, not part of this sync script.
 

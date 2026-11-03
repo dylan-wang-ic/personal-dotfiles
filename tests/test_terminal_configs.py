@@ -24,9 +24,14 @@ CANONICAL_CMUX_BINDINGS = {
     "splitRight": "ctrl+alt+shift+right",
     "splitDown": "ctrl+alt+shift+down",
     "newSurface": "ctrl+shift+t",
-    "closeTab": "ctrl+shift+w",
-    "prevSurface": "ctrl+shift+left",
-    "nextSurface": "ctrl+shift+right",
+    "closeTab": "cmd+shift+w",
+    "prevSurface": "cmd+shift+left",
+    "nextSurface": "cmd+shift+right",
+    "newSurface": "cmd+shift+t",
+    # Released because they default to Cmd+Shift+W (workspace) and
+    # Cmd+Shift+T (reopen browser panel).
+    "closeWorkspace": None,
+    "reopenClosedBrowserPanel": None,
 }
 
 # Every Ctrl+Shift binding cmux owns must act on a surface (tab), never on a
@@ -98,27 +103,33 @@ class TerminalConfigTests(unittest.TestCase):
                     "cmux discards this override; the mapping belongs in cmux.json",
                 )
 
-    def test_every_ctrl_shift_binding_is_a_tab_action(self) -> None:
+    def test_cmd_shift_is_the_tab_namespace(self) -> None:
+        """On macOS Cmd plays the role Ctrl has on Windows, so the tab keys use
+        Cmd+Shift. cmux's Cmd+Shift+W and Cmd+Shift+T defaults belong to
+        workspace close and browser reopen, so they are released."""
         config = json.loads(CMUX_CONFIG.read_text())
+        bindings = config["shortcuts"]["bindings"]
 
-        ctrl_shift = {
-            action: binding
-            for action, binding in config["shortcuts"]["bindings"].items()
-            if binding.startswith("ctrl+shift+")
+        cmd_shift = {
+            action: value
+            for action, value in bindings.items()
+            if isinstance(value, str) and value.startswith("cmd+shift+")
         }
         self.assertEqual(
-            ctrl_shift,
+            cmd_shift,
             {
-                "newSurface": "ctrl+shift+t",
-                "closeTab": "ctrl+shift+w",
-                "prevSurface": "ctrl+shift+left",
-                "nextSurface": "ctrl+shift+right",
+                "newSurface": "cmd+shift+t",
+                "closeTab": "cmd+shift+w",
+                "prevSurface": "cmd+shift+left",
+                "nextSurface": "cmd+shift+right",
             },
         )
         self.assertTrue(
-            set(ctrl_shift) <= TAB_ACTIONS,
-            f"non-tab Ctrl+Shift bindings: {sorted(set(ctrl_shift) - TAB_ACTIONS)}",
+            set(cmd_shift) <= TAB_ACTIONS,
+            f"non-tab Cmd+Shift bindings: {sorted(set(cmd_shift) - TAB_ACTIONS)}",
         )
+        self.assertIsNone(bindings["closeWorkspace"])
+        self.assertIsNone(bindings["reopenClosedBrowserPanel"])
         self.assertIs(config["app"]["keepWorkspaceOpenWhenClosingLastSurface"], True)
 
         # Ghostty's previous_tab targets cmux workspaces, so the include must
