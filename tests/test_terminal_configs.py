@@ -162,7 +162,7 @@ class TerminalConfigTests(unittest.TestCase):
             "ctrl+alt+shift+arrow_right": "new_split:right",
             "ctrl+alt+shift+arrow_up": "new_split:up",
             "ctrl+alt+shift+arrow_down": "new_split:down",
-            "ctrl+alt+w": "close_surface",
+            "ctrl+alt+w": "ignore",
         }
         for trigger, action in native_bindings.items():
             self.assertIn(f"keybind = {trigger}={action}", text)
