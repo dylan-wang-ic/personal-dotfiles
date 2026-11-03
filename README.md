@@ -146,14 +146,9 @@ bash ./sync.sh install-extensions
 
 On Windows, symlinks require Developer Mode or suitable privileges; otherwise files are copied. Windows Terminal settings always use copies because atomic UI saves replace symlinks. The `collect` command works with macOS's system Bash 3.2; only the full profile refreshes VS Code's extensions list.
 
-## Tests
+## Checks
 
-```bash
-python3 -m unittest discover -s tests -p 'test_*.py'
-bash -n sync.sh
-```
-
-The sync tests use isolated homes and platform fixtures. They do not overwrite the running user's settings or require access to work credentials. The VS Code tests read the installed bundle to check that every terminal-focus binding uses a command from `commandsToSkipShell`'s default value, and skip that check when VS Code is absent.
+Before applying, `bash -n sync.sh` catches syntax errors, `cmux config doctor --path unix/cmux/cmux.json` validates the cmux config, and `ghostty +validate-config --config-file=unix/ghostty/keybindings.conf` validates the Ghostty include.
 
 ## Manual snapshots
 
