@@ -1,10 +1,6 @@
 /**
- * Notices when gohan re-provisions the managed OMP config (~/.omp/agent/config.yml
- * and models.yml) or when the model catalog gains models, so the personal overlay
- * (~/.omp/agent/personal.yml) can be reviewed against it.
- *
- * Runs once per process on the first main-session prompt, never starts a turn, and
- * keeps re-reporting while an overlay selector no longer resolves.
+ * Flags when gohan re-provisions the managed OMP config or the model catalog
+ * gains models, so personal.yml can be reviewed. Runs once, never starts a turn.
  */
 import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
