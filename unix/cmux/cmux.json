@@ -16,10 +16,12 @@
       "focusDown": "ctrl+alt+down",
       "splitRight": "ctrl+alt+shift+right",
       "splitDown": "ctrl+alt+shift+down",
-      "closeTab": "ctrl+shift+w",
-      "prevSurface": "ctrl+shift+left",
-      "nextSurface": "ctrl+shift+right",
-      "newSurface": "ctrl+shift+t"
+      "closeTab": "cmd+shift+w",
+      "prevSurface": "cmd+shift+left",
+      "nextSurface": "cmd+shift+right",
+      "newSurface": "cmd+shift+t",
+      "closeWorkspace": null,
+      "reopenClosedBrowserPanel": null
     },
     "when": {
       "focusLeft": "terminalFocus && !terminalAlternateScreen",
