@@ -1,21 +1,21 @@
 defaultThinkingLevel: xhigh
 modelRoles:
   default: cursor/grok-4.7-500k:xhigh
-  task: cursor/grok-4.7-500k:xhigh
-  plan: anthropic/claude-opus-5-5:max
-  slow: anthropic/claude-opus-5-5:max
-  smol: anthropic/claude-sonnet-5-5:xhigh
-  tiny: anthropic/claude-haiku-5-5:xhigh
-  memory: "@tiny"
-  commit: anthropic/claude-haiku-5-5:high
-  widget: anthropic/claude-sonnet-5-5:xhigh
+  task: google-antigravity/claude-sonnet-5-5:high
+  plan: anthropic/claude-opus-5-5:xhigh
+  slow: google-antigravity/gemini-4-argon:high
+  smol: cursor/gemini-4-hydrogen:medium
+  tiny: cursor/gemini-4-hydrogen:low
+  memory: google-antigravity/gemini-4-argon:high
+  commit: cursor/gemini-4-hydrogen:medium
+  widget: cursor/gemini-4-hydrogen:medium
   vision: google-antigravity/gemini-4-argon:high
-  advisor: openai-codex/gpt-6.1-sol:xhigh
+  advisor: openai-codex/gpt-6.1-sol:max
   judge: "@tiny"
   image: openai-codex/gpt-image-2
   web: web/parallel
   speech: local/kokoro
-  dictation: local/parakeet-tdt-0.6b-v3
+  dictation: local/whisper-large-v3-turbo
 advisor:
   enabled: false
   reviewMode: agent-end
@@ -38,29 +38,35 @@ retry:
   usageReservePolicy: auto
   fallbackChains:
     default:
+      - google-antigravity/claude-sonnet-5-5:high
       - anthropic/claude-sonnet-5-5:xhigh
-      - google-antigravity/gemini-4-argon:high
     task:
+      - cursor/grok-4.7-500k:xhigh
       - anthropic/claude-sonnet-5-5:xhigh
-      - google-antigravity/gemini-4-argon:high
     plan:
-      - anthropic/claude-sonnet-5-5:xhigh
+      - openai-codex/gpt-6.1-sol:xhigh
       - google-antigravity/gemini-4-argon:high
     slow:
-      - anthropic/claude-sonnet-5-5:xhigh
-      - google-antigravity/gemini-4-argon:high
+      - anthropic/claude-opus-5-5:xhigh
+      - openai-codex/gpt-6.1-sol:xhigh
     smol:
-      - google-antigravity/gemini-4-argon:high
+      - openai-codex/gpt-6-luna:medium
+      - anthropic/claude-haiku-5-5:medium
     tiny:
-      - google-antigravity/gemini-4-argon:high
+      - openai-codex/gpt-6-luna:low
+      - anthropic/claude-haiku-5-5:low
     memory:
-      - google-antigravity/gemini-4-argon:high
+      - google-antigravity/claude-sonnet-5-5:high
+      - anthropic/claude-sonnet-5-5:high
     commit:
-      - google-antigravity/gemini-4-argon:high
+      - openai-codex/gpt-6-luna:medium
+      - anthropic/claude-haiku-5-5:medium
     widget:
-      - google-antigravity/gemini-4-argon:high
+      - openai-codex/gpt-6-luna:medium
+      - anthropic/claude-haiku-5-5:medium
     judge:
-      - google-antigravity/gemini-4-argon:high
+      - openai-codex/gpt-6-luna:low
+      - anthropic/claude-haiku-5-5:low
     advisor:
       - anthropic/claude-opus-5-5:max
       - google-antigravity/gemini-4-argon:high
@@ -69,13 +75,15 @@ retry:
     image: []
     speech: []
     dictation: []
-symbolPreset: nerd
+stt:
+  language: zh
+symbolPreset: unicode
 composer:
   shape: rule
 theme:
   dark: titanium
   light: light
-setupVersion: 2
+setupVersion: 3
 shellPath: C:\Program Files\Git\usr\bin\bash.exe
 bash:
   gitGuard: true
@@ -109,3 +117,5 @@ skills:
 hideThinkingBlock: true
 computer:
   enabled: true
+update:
+  auto: false
