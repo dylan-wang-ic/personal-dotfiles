@@ -167,6 +167,9 @@ else
       "auto|windows/powershell/Microsoft.PowerShell_profile.ps1|$PWSH_DIR/Microsoft.PowerShell_profile.ps1"
       "copy|windows/windows-terminal/settings.json|$WT_SETTINGS"
       "auto|windows/omp/config.yml|$HOME/.omp/agent/config.yml"
+      "auto|windows/omp/extensions/qwen3-asr/index.ts|$HOME/.omp/agent/extensions/qwen3-asr/index.ts"
+      "auto|windows/omp/extensions/qwen3-asr/server.py|$HOME/.omp/agent/extensions/qwen3-asr/server.py"
+      "auto|windows/omp/extensions/qwen3-asr/setup.py|$HOME/.omp/agent/extensions/qwen3-asr/setup.py"
     )
   fi
 fi

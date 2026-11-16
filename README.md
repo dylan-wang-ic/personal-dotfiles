@@ -152,6 +152,12 @@ On Windows, symlinks require Developer Mode or suitable privileges; otherwise fi
 
 Before applying, `bash -n sync.sh` catches syntax errors, `cmux config doctor --path unix/cmux/cmux.json` validates the cmux config, and `ghostty +validate-config --config-file=unix/ghostty/keybindings.conf` validates the Ghostty include.
 
+## Qwen3-ASR dictation (Windows)
+
+`windows/omp/extensions/qwen3-asr/` is an OMP extension that makes Qwen3-ASR the `dictation` model, for Chinese with embedded English and for full English. It belongs to the `all` profile. While OMP is open, the extension serves an OpenAI-style transcription endpoint on `127.0.0.1:8765` and registers `local-asr/qwen3-asr-0.6b`; it starts the Python worker (about 2 GiB of GPU memory and RAM) on the first dictation, and stops it after 15 minutes idle and when OMP exits. Nothing is started by hand.
+
+On a new machine, `./sync.sh apply` installs the extension, and the first OMP start offers the one-time environment install (`setup.py`, about 6 GB: PyTorch and the model). Until it finishes, `modelRoles.dictation` in `windows/omp/config.yml` falls back to local Whisper. The worker log is `~/.omp/qwen3-asr/worker.log`.
+
 ## Manual snapshots
 
 The files in `windows/raycast/` are Windows snapshots. Installing or opening Raycast on a Mac does not import those snapshots or change its hotkey. Use Raycast's own Import/Export Settings & Data only after reviewing cross-platform compatibility.

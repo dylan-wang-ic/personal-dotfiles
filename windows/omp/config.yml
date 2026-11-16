@@ -15,7 +15,7 @@ modelRoles:
   image: openai-codex/gpt-image-2
   web: web/parallel
   speech: local/kokoro
-  dictation: local/whisper-large-v3-turbo
+  dictation: local-asr/qwen3-asr-0.6b
 advisor:
   enabled: false
   reviewMode: agent-end
@@ -74,8 +74,10 @@ retry:
       - anthropic/claude-sonnet-5-5:xhigh
     image: []
     speech: []
-    dictation: []
+    dictation:
+      - local/whisper-large-v3-turbo
 stt:
+  enabled: true
   language: zh
 symbolPreset: unicode
 composer:
@@ -119,3 +121,5 @@ computer:
   enabled: true
 update:
   auto: false
+browser:
+  headless: false
