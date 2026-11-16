@@ -32,7 +32,7 @@ MODEL_ID = os.environ.get("QWEN_ASR_MODEL_ID", "qwen3-asr-0.6b")
 MODEL_PATH = os.environ.get("QWEN_ASR_MODEL_PATH", "Qwen/Qwen3-ASR-0.6B")  # Hub id, read from the local cache
 DEVICE = os.environ.get("QWEN_ASR_DEVICE", "cuda:0" if torch.cuda.is_available() else "cpu")
 DTYPE = torch.bfloat16 if DEVICE.startswith("cuda") else torch.float32
-MAX_NEW_TOKENS = int(os.environ.get("QWEN_ASR_MAX_NEW_TOKENS", "1024"))
+MAX_NEW_TOKENS = int(os.environ.get("QWEN_ASR_MAX_NEW_TOKENS", "4096"))  # cap only: the KV cache grows per token (112 KiB each)
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024  # same cap as the OpenAI endpoint
 
 app = FastAPI(title="qwen3-asr")
