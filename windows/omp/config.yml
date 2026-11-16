@@ -74,8 +74,7 @@ retry:
       - anthropic/claude-sonnet-5-5:xhigh
     image: []
     speech: []
-    dictation:
-      - local/whisper-large-v3-turbo
+    dictation: []
 stt:
   enabled: true
   language: zh
